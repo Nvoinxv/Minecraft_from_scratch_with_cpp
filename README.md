@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⛏️ MinecraftCPP
+# ⛏️ Minecraft From Scratch By Nvoin With CPP
 
 **A voxel-based sandbox game engine built from scratch in modern C++ & OpenGL**
 
