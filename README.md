@@ -113,10 +113,10 @@ MinecraftCPP/
 Clone repository ini terlebih dahulu, lalu compile menggunakan `g++`:
 
 ```bash
-g++ \
-main.cpp \
+g++ main.cpp \
 src/glad.c \
 src/core/*.cpp \
+src/gameplay/*.cpp \
 src/graphics/*.cpp \
 src/world/*.cpp \
 -Iinclude \
