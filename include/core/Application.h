@@ -4,6 +4,7 @@
 #include "Time.h"
 #include "Input.h"
 
+#include "../graphics/Renderer.h"
 #include "../graphics/Camera.h"
 
 class Application
@@ -29,6 +30,7 @@ private:
 private:
 
     Window      m_Window;
+    Renderer    m_Renderer;
     Camera      m_Camera;
 
     bool        m_IsRunning;
