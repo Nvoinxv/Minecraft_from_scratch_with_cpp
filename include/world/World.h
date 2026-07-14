@@ -32,8 +32,11 @@ public:
     void GenerateChunk(int chunkX, int chunkZ);
     void GenerateTree(int globalX, int groundY, int globalZ);
 
+#include <vector>
+
 private:
     std::map<std::pair<int, int>, std::unique_ptr<Chunk>> m_Chunks;
+    std::vector<std::pair<int, int>> m_MeshUpdateQueue;
     
     int m_LastPlayerChunkX = -999999;
     int m_LastPlayerChunkZ = -999999;

@@ -2,6 +2,7 @@
 #include "world/Block.h"
 #include <cmath>
 #include <iostream>
+#include <algorithm>
 
 World::World()
 {
@@ -34,11 +35,24 @@ void World::Update(float deltaTime, const glm::vec3& playerPos)
         m_LastPlayerChunkX = playerChunkX;
         m_LastPlayerChunkZ = playerChunkZ;
     }
+
+    // Time-Slicing: Proses maksimal 1 mesh generation per frame untuk mencegah stutter
+    if (!m_MeshUpdateQueue.empty())
+    {
+        auto coords = m_MeshUpdateQueue.front();
+        m_MeshUpdateQueue.erase(m_MeshUpdateQueue.begin());
+
+        Chunk* c = GetChunk(coords.first, coords.second);
+        if (c)
+        {
+            c->GenerateMesh(this);
+        }
+    }
 }
 
 void World::LoadChunksAroundPlayer(int playerChunkX, int playerChunkZ)
 {
-    std::vector<Chunk*> chunksToMesh;
+    std::vector<std::pair<int, int>> chunksToMesh;
 
     for (int cz = playerChunkZ - RENDER_DISTANCE; cz <= playerChunkZ + RENDER_DISTANCE; ++cz)
     {
@@ -47,13 +61,13 @@ void World::LoadChunksAroundPlayer(int playerChunkX, int playerChunkZ)
             if (m_Chunks.find({cx, cz}) == m_Chunks.end())
             {
                 GenerateChunk(cx, cz);
-                chunksToMesh.push_back(GetChunk(cx, cz));
+                chunksToMesh.push_back({cx, cz});
                 
                 // Also trigger mesh update for neighbors to prevent gaps
-                Chunk* n1 = GetChunk(cx-1, cz); if (n1) chunksToMesh.push_back(n1);
-                Chunk* n2 = GetChunk(cx+1, cz); if (n2) chunksToMesh.push_back(n2);
-                Chunk* n3 = GetChunk(cx, cz-1); if (n3) chunksToMesh.push_back(n3);
-                Chunk* n4 = GetChunk(cx, cz+1); if (n4) chunksToMesh.push_back(n4);
+                chunksToMesh.push_back({cx-1, cz});
+                chunksToMesh.push_back({cx+1, cz});
+                chunksToMesh.push_back({cx, cz-1});
+                chunksToMesh.push_back({cx, cz+1});
             }
         }
     }
@@ -73,10 +87,14 @@ void World::LoadChunksAroundPlayer(int playerChunkX, int playerChunkZ)
         }
     }
 
-    // Rebuild meshes
-    for (Chunk* c : chunksToMesh)
+    // Masukkan ke antrian (queue) agar diproses secara bertahap (Time-Slicing)
+    for (auto coords : chunksToMesh)
     {
-        c->GenerateMesh(this);
+        // Hanya masukkan jika belum ada di antrian
+        if (std::find(m_MeshUpdateQueue.begin(), m_MeshUpdateQueue.end(), coords) == m_MeshUpdateQueue.end())
+        {
+            m_MeshUpdateQueue.push_back(coords);
+        }
     }
 }
 

@@ -6,6 +6,8 @@
 #include <iostream>
 #include <iomanip>
 
+class World;
+
 class Camera
 {
 public:
@@ -17,7 +19,8 @@ public:
         bool backward,
         bool left,
         bool right,
-        float deltaTime);
+        float deltaTime,
+        World* world);
 
     void ProcessMouse(
         float xoffset,

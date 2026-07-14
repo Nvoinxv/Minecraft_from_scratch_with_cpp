@@ -40,7 +40,6 @@ void Input::Initialize(GLFWwindow* window)
     }
 
     glfwSetScrollCallback(s_Window, ScrollCallback);
-    glfwSetCursorPosCallback(s_Window, MouseCallback);
 
     glfwGetCursorPos(
         s_Window,
@@ -92,11 +91,12 @@ void Input::Update()
             ) == GLFW_PRESS;
     }
 
-    // glfwGetCursorPos now handled by MouseCallback
-    // but we still need to calculate Delta and reset it if no movement happened
-    // Wait, with MouseCallback, Delta should be accumulated and then reset after use.
-    // For now, let's just clear DeltaX/Y at the START of next frame if no callback happened,
-    // actually it's easier to just calculate delta from s_MouseX here.
+    // Sinkronisasi polling mouse dengan keyboard untuk mencegah event starvation
+    glfwGetCursorPos(
+        s_Window,
+        &s_MouseX,
+        &s_MouseY
+    );
 
     if (s_FirstMouse)
     {
@@ -219,11 +219,4 @@ void Input::ScrollCallback(
     s_ScrollY = yOffset;
 }
 
-void Input::MouseCallback(
-    GLFWwindow*,
-    double xpos,
-    double ypos)
-{
-    s_MouseX = xpos;
-    s_MouseY = ypos;
 }

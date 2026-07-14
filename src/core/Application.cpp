@@ -14,7 +14,7 @@ Application::Application()
         "Minecraft Alpha"),
     m_Camera(glm::vec3(
         0.0f,
-        36.0f,
+        75.0f,
         8.0f)),
     m_IsRunning(false),
     m_TelemetryTimer(0.0f)
@@ -166,7 +166,8 @@ void Application::Update()
         Input::IsKeyDown(GLFW_KEY_S),
         Input::IsKeyDown(GLFW_KEY_A),
         Input::IsKeyDown(GLFW_KEY_D),
-        Time::GetDeltaTime()
+        Time::GetDeltaTime(),
+        &m_World
     );
 
     // Pergerakan sudut pandang kamera berdasarkan rotasi mouse (hanya saat kursor dikunci)
@@ -174,13 +175,6 @@ void Application::Update()
     {
         float mouseDeltaX = static_cast<float>(Input::GetDeltaX());
         float mouseDeltaY = static_cast<float>(Input::GetDeltaY());
-
-        // [Trackpad Workaround] Izinkan Tombol Panah (Arrow Keys) untuk merotasi kamera
-        float arrowLookSpeed = 1000.0f * Time::GetDeltaTime(); 
-        if (Input::IsKeyDown(GLFW_KEY_LEFT))  mouseDeltaX -= arrowLookSpeed;
-        if (Input::IsKeyDown(GLFW_KEY_RIGHT)) mouseDeltaX += arrowLookSpeed;
-        if (Input::IsKeyDown(GLFW_KEY_UP))    mouseDeltaY -= arrowLookSpeed;
-        if (Input::IsKeyDown(GLFW_KEY_DOWN))  mouseDeltaY += arrowLookSpeed;
 
         m_Camera.ProcessMouse(mouseDeltaX, mouseDeltaY);
 

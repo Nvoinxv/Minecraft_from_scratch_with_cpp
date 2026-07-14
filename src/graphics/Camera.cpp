@@ -78,25 +78,74 @@ void Camera::UpdateVectors()
         Front));
 }
 
+#include "world/World.h"
+
 // Bagian melakukan pergerakan kamera berdasarkan input keyboard
 void Camera::ProcessKeyboard(
     bool forward,
     bool backward,
     bool left,
     bool right,
-    float deltaTime)
+    float deltaTime,
+    World* world)
 {
     float velocity = Speed * deltaTime;
 
-    if (forward)
-        Position += Front * velocity;
+    glm::vec3 movement(0.0f);
+    if (forward)  movement += Front * velocity;
+    if (backward) movement -= Front * velocity;
+    if (left)     movement -= Right * velocity;
+    if (right)    movement += Right * velocity;
 
-    if (backward)
-        Position -= Front * velocity;
+    if (!world) {
+        Position += movement; // Fallback jika world null
+        return;
+    }
 
-    if (left)
-        Position -= Right * velocity;
+    // Fungsi helper untuk mengecek tabrakan AABB pemain di posisi target
+    auto checkCollision = [&](const glm::vec3& targetPos) -> bool {
+        // Asumsi ukuran pemain: Lebar 0.6 (-0.3 s.d 0.3), Tinggi 1.8 (-1.6 s.d +0.2 dari mata/kamera)
+        float minX = targetPos.x - 0.3f;
+        float maxX = targetPos.x + 0.3f;
+        float minY = targetPos.y - 1.6f;
+        float maxY = targetPos.y + 0.2f;
+        float minZ = targetPos.z - 0.3f;
+        float maxZ = targetPos.z + 0.3f;
 
-    if (right)
-        Position += Right * velocity;
+        // Cek semua blok integer yang bersentuhan dengan AABB
+        int startX = static_cast<int>(std::floor(minX));
+        int endX   = static_cast<int>(std::floor(maxX));
+        int startY = static_cast<int>(std::floor(minY));
+        int endY   = static_cast<int>(std::floor(maxY));
+        int startZ = static_cast<int>(std::floor(minZ));
+        int endZ   = static_cast<int>(std::floor(maxZ));
+
+        for (int x = startX; x <= endX; ++x) {
+            for (int y = startY; y <= endY; ++y) {
+                for (int z = startZ; z <= endZ; ++z) {
+                    // ID 0 adalah udara (Air). Selain udara dianggap solid (tembok/tanah).
+                    if (world->GetBlockGlobal(x, y, z) != 0) {
+                        return true; // Ada tabrakan
+                    }
+                }
+            }
+        }
+        return false;
+    };
+
+    // Aplikasikan pergerakan per-sumbu agar bisa 'meluncur' (sliding) di tembok
+    Position.x += movement.x;
+    if (checkCollision(Position)) {
+        Position.x -= movement.x; // Batalkan gerakan X jika menabrak
+    }
+
+    Position.y += movement.y;
+    if (checkCollision(Position)) {
+        Position.y -= movement.y; // Batalkan gerakan Y jika menabrak
+    }
+
+    Position.z += movement.z;
+    if (checkCollision(Position)) {
+        Position.z -= movement.z; // Batalkan gerakan Z jika menabrak
+    }
 }
