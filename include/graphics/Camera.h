@@ -33,7 +33,7 @@ public:
 private:
 
     void UpdateVectors();
-    bool CheckCollision(const glm::vec3& pos, World* world) const;
+    bool CheckCollision(const glm::vec3& pos, World* world, float feetEpsilon = 0.0f) const;
 
 public:
 

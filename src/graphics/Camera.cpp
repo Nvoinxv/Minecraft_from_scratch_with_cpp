@@ -81,13 +81,15 @@ void Camera::UpdateVectors()
 #include "world/World.h"
 #include <cmath>
 
-// Helper: cek tabrakan AABB di posisi pos
-bool Camera::CheckCollision(const glm::vec3& pos, World* world) const
+// Helper: cek tabrakan AABB di posisi pos.
+// feetEpsilon: offset kecil dari bawah AABB — dipakai saat cek horizontal
+// agar blok lantai yang sedang dipijak tidak ikut dihitung sebagai collision.
+bool Camera::CheckCollision(const glm::vec3& pos, World* world, float feetEpsilon) const
 {
     float minX = pos.x - PLAYER_R;
     float maxX = pos.x + PLAYER_R;
-    float minY = pos.y - PLAYER_H;   // kaki
-    float maxY = pos.y + 0.2f;       // sedikit di atas mata (head clearance)
+    float minY = pos.y - PLAYER_H + feetEpsilon;  // geser sedikit ke atas saat cek horizontal
+    float maxY = pos.y + 0.2f;
     float minZ = pos.z - PLAYER_R;
     float maxZ = pos.z + PLAYER_R;
 
@@ -142,13 +144,15 @@ void Camera::ProcessKeyboard(
     if (right)    hMove += flatRight * vel;
 
     // Terapkan horizontal X dulu, rollback kalau nabrak
+    // feetEpsilon=1.0f: geser bottom AABB 1 unit ke atas agar blok lantai
+    // yang dipijak tidak dihitung — menghindari "frozen on ground" bug.
     Position.x += hMove.x;
-    if (CheckCollision(Position, world))
+    if (CheckCollision(Position, world, 1.0f))
         Position.x -= hMove.x;
 
     // Terapkan horizontal Z
     Position.z += hMove.z;
-    if (CheckCollision(Position, world))
+    if (CheckCollision(Position, world, 1.0f))
         Position.z -= hMove.z;
 
     // -------------------------------------------------------
