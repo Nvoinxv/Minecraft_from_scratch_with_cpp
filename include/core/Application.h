@@ -6,6 +6,9 @@
 
 #include "../graphics/Renderer.h"
 #include "../graphics/Camera.h"
+#include "../graphics/Shader.h"
+#include "../world/World.h"
+#include "../world/Block.h"
 
 class Application
 {
@@ -36,6 +39,8 @@ private:
     Window      m_Window;
     Renderer    m_Renderer;
     Camera      m_Camera;
+    Shader      m_Shader;
+    World       m_World;
 
     bool        m_IsRunning;
     float       m_TelemetryTimer;

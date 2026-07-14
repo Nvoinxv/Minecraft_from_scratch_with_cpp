@@ -1,6 +1,8 @@
 #include "graphics/Renderer.h"
 
 #include "graphics/Mesh.h"
+#include "graphics/Shader.h"
+#include "world/World.h"
 
 Renderer::Renderer()
 {
@@ -91,4 +93,11 @@ void Renderer::DrawMesh(
     const Mesh& mesh) const
 {
     mesh.Draw();
+}
+
+void Renderer::DrawWorld(
+    const World& world,
+    const Shader& shader) const
+{
+    world.Render(shader);
 }

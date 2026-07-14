@@ -4,6 +4,8 @@
 #include <GLFW/glfw3.h>
 
 class Mesh;
+class World;
+class Shader;
 
 class Renderer
 {
@@ -43,6 +45,11 @@ public:
 
     void DrawMesh(
         const Mesh& mesh
+    ) const;
+
+    void DrawWorld(
+        const World& world,
+        const Shader& shader
     ) const;
 
 private:

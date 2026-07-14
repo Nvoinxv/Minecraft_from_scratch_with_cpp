@@ -14,8 +14,8 @@ Application::Application()
         "Minecraft Alpha"),
     m_Camera(glm::vec3(
         0.0f,
-        64.0f,
-        0.0f)),
+        36.0f,
+        8.0f)),
     m_IsRunning(false),
     m_TelemetryTimer(0.0f)
 {
@@ -60,6 +60,20 @@ bool Application::Initialize()
         return false;
     }
     std::cout << "[Application]     -> Renderer initialized successfully." << std::endl;
+
+    std::cout << "[Application] 5/6 Initializing Block Registry & Loading JSON definitions..." << std::endl;
+    if (!BlockRegistry::Get().Initialize("data/blocks"))
+    {
+        std::cerr << "[Application] WARNING: BlockRegistry initialization encountered issues or used fallbacks." << std::endl;
+    }
+
+    std::cout << "[Application] 6/6 Loading 3D Voxel Shaders & Generating World..." << std::endl;
+    if (!m_Shader.Load("assets/shaders/block.vert", "assets/shaders/block.frag"))
+    {
+        std::cerr << "[Application] ERROR: Failed to load block shaders!" << std::endl;
+        return false;
+    }
+    m_World.Initialize();
 
     m_IsRunning = true;
     m_TelemetryTimer = 0.0f;
@@ -126,7 +140,7 @@ void Application::Update()
     // World
     //---------------------------------------
 
-    // m_World.Update();
+    m_World.Update(Time::GetDeltaTime());
 
     //---------------------------------------
     // Entity
@@ -231,7 +245,18 @@ void Application::Render()
     // World
     //---------------------------------------
 
-    // m_Renderer.DrawWorld(m_World);
+    m_Shader.Use();
+    glm::mat4 projection = glm::perspective(
+        glm::radians(70.0f),
+        static_cast<float>(m_Window.GetWidth()) / static_cast<float>(m_Window.GetHeight()),
+        0.1f,
+        500.0f
+    );
+    glm::mat4 view = m_Camera.GetViewMatrix();
+    m_Shader.SetMat4("u_Projection", projection);
+    m_Shader.SetMat4("u_View", view);
+
+    m_Renderer.DrawWorld(m_World, m_Shader);
 
     //---------------------------------------
     // Player
@@ -260,6 +285,11 @@ void Application::Shutdown()
     std::cout << "================================================================================\n";
 
     m_IsRunning = false;
+
+    std::cout << "[Application] Shutting down World, Shader & BlockRegistry..." << std::endl;
+    m_World.Shutdown();
+    m_Shader.Destroy();
+    BlockRegistry::Get().Shutdown();
 
     std::cout << "[Application] Shutting down Renderer..." << std::endl;
     m_Renderer.Shutdown();
