@@ -1,0 +1,22 @@
+{
+    "id": 8,
+    "name": "Chest",
+    "display_name": "Chest",
+    "hardness": 2.5,
+    "is_solid": true,
+    "is_transparent": false,
+    "is_light_source": false,
+    "light_level": 0,
+    "tool_type": "axe",
+    "drop": "chest",
+    "is_interactive": true,
+    "textures": {
+        "top": "textures/blocks/chest.png",
+        "bottom": "textures/blocks/chest.png",
+        "front": "textures/blocks/chest.png",
+        "back": "textures/blocks/chest.png",
+        "left": "textures/blocks/chest.png",
+        "right": "textures/blocks/chest.png"
+    },
+    "atlas_index": 7
+}

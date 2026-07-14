@@ -1,0 +1,21 @@
+{
+    "id": 3,
+    "name": "Stone",
+    "display_name": "Stone",
+    "hardness": 1.5,
+    "is_solid": true,
+    "is_transparent": false,
+    "is_light_source": false,
+    "light_level": 0,
+    "tool_type": "pickaxe",
+    "drop": "cobblestone",
+    "textures": {
+        "top": "textures/blocks/stone.png",
+        "bottom": "textures/blocks/stone.png",
+        "front": "textures/blocks/stone.png",
+        "back": "textures/blocks/stone.png",
+        "left": "textures/blocks/stone.png",
+        "right": "textures/blocks/stone.png"
+    },
+    "atlas_index": 2
+}

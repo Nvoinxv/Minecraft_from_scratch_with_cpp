@@ -1,0 +1,21 @@
+{
+    "id": 2,
+    "name": "Grass",
+    "display_name": "Grass Block",
+    "hardness": 0.6,
+    "is_solid": true,
+    "is_transparent": false,
+    "is_light_source": false,
+    "light_level": 0,
+    "tool_type": "shovel",
+    "drop": "dirt",
+    "textures": {
+        "top": "textures/blocks/grass_top.png",
+        "bottom": "textures/blocks/dirt.png",
+        "front": "textures/blocks/grass_side.png",
+        "back": "textures/blocks/grass_side.png",
+        "left": "textures/blocks/grass_side.png",
+        "right": "textures/blocks/grass_side.png"
+    },
+    "atlas_index": 1
+}

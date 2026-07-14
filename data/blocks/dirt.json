@@ -1,0 +1,21 @@
+{
+    "id": 1,
+    "name": "Dirt",
+    "display_name": "Dirt",
+    "hardness": 0.5,
+    "is_solid": true,
+    "is_transparent": false,
+    "is_light_source": false,
+    "light_level": 0,
+    "tool_type": "shovel",
+    "drop": "dirt",
+    "textures": {
+        "top": "textures/blocks/dirt.png",
+        "bottom": "textures/blocks/dirt.png",
+        "front": "textures/blocks/dirt.png",
+        "back": "textures/blocks/dirt.png",
+        "left": "textures/blocks/dirt.png",
+        "right": "textures/blocks/dirt.png"
+    },
+    "atlas_index": 0
+}

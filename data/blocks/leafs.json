@@ -1,0 +1,21 @@
+{
+    "id": 6,
+    "name": "Leafs",
+    "display_name": "Oak Leaves",
+    "hardness": 0.2,
+    "is_solid": true,
+    "is_transparent": true,
+    "is_light_source": false,
+    "light_level": 0,
+    "tool_type": "shears",
+    "drop": "none",
+    "textures": {
+        "top": "textures/blocks/leafs.png",
+        "bottom": "textures/blocks/leafs.png",
+        "front": "textures/blocks/leafs.png",
+        "back": "textures/blocks/leafs.png",
+        "left": "textures/blocks/leafs.png",
+        "right": "textures/blocks/leafs.png"
+    },
+    "atlas_index": 5
+}
