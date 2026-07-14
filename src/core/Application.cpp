@@ -42,6 +42,7 @@ bool Application::Initialize()
         std::cerr << "[Application] ERROR: Failed to create GLFW window!" << std::endl;
         return false;
     }
+    m_Window.PollEvents();
     std::cout << "[Application]     -> Window successfully created and context active." << std::endl;
 
     std::cout << "[Application] 2/4 Initializing Time System..." << std::endl;
@@ -80,7 +81,7 @@ bool Application::Initialize()
 
     std::cout << "================================================================================\n";
     std::cout << "[Application] ALL SYSTEMS READY! Entering game loop...\n";
-    std::cout << "[Info Kontrol] W/A/S/D = Gerak | Mouse = Lihat | F3 = Debug Telemetry | ESC = Keluar\n";
+    std::cout << "[Info Kontrol] W/A/S/D = Gerak | Mouse = Lihat | TAB = Toggle Kursor | F3 = Debug | ESC = Keluar\n";
     std::cout << "================================================================================\n\n";
 
     return true;
@@ -93,6 +94,8 @@ void Application::Run()
     while (m_IsRunning &&
            !m_Window.ShouldClose())
     {
+        m_Window.PollEvents();
+
         Time::Update();
 
         Input::Update();
@@ -118,6 +121,22 @@ void Application::Update()
         return;
     }
 
+    // Tombol TAB untuk membebaskan / mengunci kembali kursor mouse
+    if (Input::IsKeyPressed(GLFW_KEY_TAB))
+    {
+        int currentMode = glfwGetInputMode(m_Window.GetNativeWindow(), GLFW_CURSOR);
+        if (currentMode == GLFW_CURSOR_DISABLED)
+        {
+            glfwSetInputMode(m_Window.GetNativeWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            std::cout << "[Input Event] Tombol TAB: Kursor dibebaskan (Normal Mode)." << std::endl;
+        }
+        else
+        {
+            glfwSetInputMode(m_Window.GetNativeWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            std::cout << "[Input Event] Tombol TAB: Kursor dikunci (FPS Look Mode)." << std::endl;
+        }
+    }
+
     // Pergerakan kamera/player berdasarkan input keyboard (W, S, A, D)
     m_Camera.ProcessKeyboard(
         Input::IsKeyDown(GLFW_KEY_W),
@@ -127,11 +146,14 @@ void Application::Update()
         Time::GetDeltaTime()
     );
 
-    // Pergerakan sudut pandang kamera berdasarkan rotasi mouse
-    m_Camera.ProcessMouse(
-        static_cast<float>(Input::GetDeltaX()),
-        static_cast<float>(Input::GetDeltaY())
-    );
+    // Pergerakan sudut pandang kamera berdasarkan rotasi mouse (hanya saat kursor dikunci)
+    if (glfwGetInputMode(m_Window.GetNativeWindow(), GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
+    {
+        m_Camera.ProcessMouse(
+            static_cast<float>(Input::GetDeltaX()),
+            static_cast<float>(Input::GetDeltaY())
+        );
+    }
 
     // Perbarui HUD Telemetri (Window Title dan Console Debug)
     UpdateTelemetry();

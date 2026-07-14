@@ -22,6 +22,8 @@ double Input::s_DeltaY = 0.0;
 double Input::s_ScrollX = 0.0;
 double Input::s_ScrollY = 0.0;
 
+static bool s_FirstMouse = true;
+
 void Input::Initialize(GLFWwindow* window)
 {
     s_Window = window;
@@ -31,6 +33,12 @@ void Input::Initialize(GLFWwindow* window)
         return;
     }
 
+    glfwSetInputMode(s_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    if (glfwRawMouseMotionSupported())
+    {
+        glfwSetInputMode(s_Window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    }
+
     glfwSetScrollCallback(s_Window, ScrollCallback);
 
     glfwGetCursorPos(
@@ -38,6 +46,9 @@ void Input::Initialize(GLFWwindow* window)
         &s_LastMouseX,
         &s_LastMouseY
     );
+    s_MouseX = s_LastMouseX;
+    s_MouseY = s_LastMouseY;
+    s_FirstMouse = true;
 }
 
 void Input::Update()
@@ -83,6 +94,13 @@ void Input::Update()
         &s_MouseX,
         &s_MouseY
     );
+
+    if (s_FirstMouse)
+    {
+        s_LastMouseX = s_MouseX;
+        s_LastMouseY = s_MouseY;
+        s_FirstMouse = false;
+    }
 
     s_DeltaX = s_MouseX - s_LastMouseX;
     s_DeltaY = s_MouseY - s_LastMouseY;

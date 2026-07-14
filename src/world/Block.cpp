@@ -101,6 +101,9 @@ bool BlockRegistry::Initialize(const std::string& blocksDirectory)
 
                 m_BlocksByID[block.ID] = block;
                 m_IDsByName[block.Name] = block.ID;
+                std::string lowerName = block.Name;
+                for (auto& c : lowerName) c = (char)tolower(c);
+                m_IDsByName[lowerName] = block.ID;
 
                 std::cout << "[BlockRegistry] Registered Block ID " << (int)block.ID 
                           << " (" << block.DisplayName << ") | Solid: " << (block.IsSolid ? "Yes" : "No") << "\n";
@@ -206,6 +209,13 @@ const BlockData& BlockRegistry::GetBlock(uint8_t id) const
 const BlockData& BlockRegistry::GetBlockByName(const std::string& name) const
 {
     auto it = m_IDsByName.find(name);
+    if (it != m_IDsByName.end())
+    {
+        return GetBlock(it->second);
+    }
+    std::string lowerName = name;
+    for (auto& c : lowerName) c = (char)tolower(c);
+    it = m_IDsByName.find(lowerName);
     if (it != m_IDsByName.end())
     {
         return GetBlock(it->second);
