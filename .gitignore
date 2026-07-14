@@ -1,0 +1,80 @@
+# ==========================================
+# Compiled Object files and Intermediate files
+# ==========================================
+*.o
+*.obj
+*.slo
+*.lo
+*.d
+*.gch
+*.pch
+
+# ==========================================
+# Libraries and Linker Outputs
+# ==========================================
+*.lib
+*.a
+*.la
+*.lai
+*.so
+*.so.*
+*.dylib
+*.dll
+*.ilk
+*.exp
+*.pdb
+*.map
+
+# ==========================================
+# Executables
+# ==========================================
+*.exe
+*.out
+*.app
+
+# ==========================================
+# Build Directories
+# ==========================================
+[Bb]uild/
+[Bb]in/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# ==========================================
+# Build System Artifacts (CMake, Make, etc.)
+# ==========================================
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+install_manifest.txt
+compile_commands.json
+.cache/
+
+# ==========================================
+# IDE and Editor Directories
+# ==========================================
+# Visual Studio
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# CLion / JetBrains
+.idea/
+cmake-build-*/
+
+# ==========================================
+# Operating System Files
+# ==========================================
+.DS_Store
+Thumbs.db
