@@ -1,6 +1,7 @@
 // Bagian core
 #include "../include/core/Window.h"
 #include "../include/core/Time.h"
+#include "../include/core/Application.h"
 
 // Bagian graphics
 #include "../include/graphics/Camera.h"

@@ -4,13 +4,12 @@
 
 Application::Application()
     :
+    m_Camera(glm::vec3(
+        0.0f,
+        64.0f,
+        0.0f)),
     m_IsRunning(false)
 {
-}
-
-Application::~Application()
-{
-    Shutdown();
 }
 
 bool Application::Initialize()
@@ -57,11 +56,18 @@ void Application::Run()
 
 void Application::Update()
 {
-    //---------------------------------------
-    // Camera
-    //---------------------------------------
+    m_Camera.ProcessKeyboard(
+        Input::IsKeyDown(GLFW_KEY_W),
+        Input::IsKeyDown(GLFW_KEY_S),
+        Input::IsKeyDown(GLFW_KEY_A),
+        Input::IsKeyDown(GLFW_KEY_D),
+        Time::GetDeltaTime()
+    );
 
-    m_Camera.Update();
+    m_Camera.ProcessMouse(
+        static_cast<float>(Input::GetDeltaX()),
+        static_cast<float>(Input::GetDeltaY())
+    );
 
     //---------------------------------------
     // World
@@ -74,14 +80,6 @@ void Application::Update()
     //---------------------------------------
 
     // m_Player.Update();
-
-    //---------------------------------------
-    // Physics
-    //---------------------------------------
-
-    //---------------------------------------
-    // Audio
-    //---------------------------------------
 }
 
 void Application::Render()
