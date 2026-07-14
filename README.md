@@ -92,3 +92,15 @@ MinecraftCPP/
 ├── CMakeLists.txt
 │
 └── README.md
+
+Jika mau melakukan running untuk eksekusi kodenya bisa melakukan seperti ini: 
+g++ \
+main.cpp \
+src/glad.c \
+src/core/*.cpp \
+src/graphics/*.cpp \
+world/*.cpp \
+-Iinclude \
+-lglfw \
+-lGL \
+-o minecraft

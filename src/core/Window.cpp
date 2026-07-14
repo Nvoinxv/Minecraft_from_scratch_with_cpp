@@ -1,7 +1,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "include/core/Window.h"
+#include "core/Window.h"
 
 Window::Window(int width,
                int height,
