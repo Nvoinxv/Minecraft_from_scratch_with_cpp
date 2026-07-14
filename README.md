@@ -24,62 +24,42 @@
 
 ## ✨ Fitur Utama
 
-- 🌍 **Procedural World Generation** menggunakan FastNoiseLite
-- 🧱 **Block Registry System** — mudah menambahkan tipe block baru
-- 🎮 **Player Controller** lengkap dengan collision & raycast untuk block interaction
-- 🖼️ **Custom Rendering Pipeline** (shader, texture atlas, chunk meshing)
-- 💾 **Save/Load System** untuk menyimpan progres dunia
-- 🧩 **UI Dasar** — crosshair, hotbar, dan inventory
+- 🎮 **Modular Gameplay & Game Modes** — Arsitektur gameplay modular dengan dukungan penuh untuk **Creative Mode**, **Survival Mode**, sistem **Inventory**, serta manajemen **Player Controller** (`PlayerController`, `GameMode`, `CreativeMode`, `SurvivalMode`, `Inventory`)
+- 🌍 **Procedural Voxel World** — Pembuatan dunia berbasis voxel procedural mulai dari manajemen **Block**, **Chunk generation**, **ChunkManager**, **ChunkMesh**, hingga **WorldGenerator**
+- 📊 **Real-time Telemetry & Debug HUD** — HUD dinamis pada Window Title serta log telemetri interaktif (`F3`) untuk memantau FPS, waktu frame (ms), rotasi kamera/player, koordinat (XYZ), dan status input pergerakan secara presisi
+- 🖼️ **Custom Rendering Pipeline** — Sistem rendering modular (Renderer, Camera, Mesh, Shader, Texture) yang dibangun di atas OpenGL 3.3+ & GLM
+- ⚡ **Core Engine Architecture** — Application loop modern (`Application`), manajemen windowing (`Window` via GLFW), handling input akurat (`Input`), dan pemantauan waktu (`Time`)
 
 ---
 
 ## 📁 Struktur Proyek
 
+Struktur folder telah diperbarui dan dirapikan dengan pemisahan modular antara header (`include/`) dan implementasi (`src/`), serta penambahan modul **gameplay**:
+
 ```
 MinecraftCPP/
 │
-├── assets/                 # Aset visual & audio
-│   ├── textures/
-│   │   ├── atlas.png
-│   │   └── blocks/
-│   ├── shaders/
-│   │   ├── block.vert
-│   │   └── block.frag
-│   ├── fonts/
-│   └── sounds/
-│
+├── assets/                  # Aset visual & audio (textures, shaders, fonts, sounds)
 ├── data/                    # Data konfigurasi block & world
-│   ├── blocks/
-│   │   ├── grass.json
-│   │   ├── dirt.json
-│   │   └── stone.json
-│   └── worlds/
 │
-├── docs/                     # Dokumentasi tambahan
-├── include/                   # Header files
+├── include/                 # Header files (.h)
+│   ├── core/                # Application.h, Window.h, Input.h, Time.h
+│   ├── gameplay/            # CreativeMode.h, SurvivalMode.h, GameMode.h, Inventory.h, PlayerController.h
+│   ├── graphics/            # Camera.h, Mesh.h, Renderer.h, Shader.h, Texture.h
+│   ├── glad/                # GLAD OpenGL loader headers
+│   └── KHR/                 # Khronos platform headers
 │
-├── external/                   # Third-party libraries
-│   ├── glad/
-│   ├── glfw/
-│   ├── glm/
-│   ├── stb/
-│   └── FastNoiseLite/
+├── src/                     # Source code (.cpp / .c)
+│   ├── core/                # Implementasi core engine loop, window, input, time
+│   ├── gameplay/            # Implementasi logika permainan & mode game (Creative, Survival, Inventory, PlayerController)
+│   ├── graphics/            # Implementasi rendering pipeline & kamera
+│   ├── world/               # Implementasi dunia voxel (Block, Chunk, ChunkManager, ChunkMesh, World, WorldGenerator)
+│   └── glad.c               # GLAD implementation loader
 │
-├── src/
-│   ├── core/                    # Application loop, window, input, time
-│   ├── graphics/                 # Renderer, shader, texture, camera, mesh
-│   ├── world/                     # World, chunk, chunk mesh & manager, worldgen
-│   ├── blocks/                     # Block registry & tipe-tipe block
-│   ├── player/                      # Player, inventory, camera controller
-│   ├── physics/                      # Collision & raycasting
-│   ├── ui/                            # Crosshair, inventory UI, hotbar
-│   ├── save/                           # Save manager & world serializer
-│   ├── utils/                           # Math, logger, random helper
-│   └── main.cpp
-│
-├── tests/                      # Unit test
-├── CMakeLists.txt
-└── README.md
+├── main.cpp                 # Entry point utama aplikasi
+├── dockerfile               # Kontainerisasi untuk build/deploy
+├── docker-compose.yml       # Konfigurasi Docker Compose
+└── README.md                # Dokumentasi proyek
 ```
 
 ---
@@ -90,7 +70,7 @@ MinecraftCPP/
 
 ![Voxel World Concept](https://images.unsplash.com/photo-1560419015-7c427e8ae5ba?w=800&q=60)
 
-*Ilustrasi konsep voxel world — texture atlas dan chunk mesh menjadi fondasi utama rendering.*
+*Ilustrasi konsep voxel world — kolaborasi modular antara core engine, rendering pipeline, world generation, dan sistem gameplay.*
 
 </div>
 
@@ -100,17 +80,17 @@ MinecraftCPP/
 
 | Dependency | Keterangan |
 |---|---|
-| **Compiler** | GCC / Clang dengan dukungan C++17 |
+| **Compiler** | GCC / Clang / MSVC dengan dukungan C++17 |
 | **GLFW** | Window & input handling |
 | **GLAD** | OpenGL function loader |
-| **GLM** | Math library untuk transformasi 3D |
+| **GLM** | Math library untuk transformasi & vektor 3D |
 | **OpenGL** | Minimal versi 3.3+ |
 
 ---
 
 ## 🚀 Cara Menjalankan
 
-Clone repository ini terlebih dahulu, lalu compile menggunakan `g++`:
+Clone repository ini terlebih dahulu, lalu compile menggunakan `g++` (atau compiler C++ pilihanmu):
 
 ```bash
 g++ main.cpp \
@@ -131,7 +111,7 @@ Kemudian jalankan hasil build:
 ./minecraft
 ```
 
-> 💡 Pastikan seluruh dependency (GLFW, GLAD, GLM) sudah terpasang dan path include-nya sesuai dengan struktur folder `external/`.
+> 💡 Pastikan seluruh dependency (GLFW, GLAD, GLM) sudah terpasang di sistem dan parameter `-Iinclude` digunakan agar struktur modul header terbaca dengan benar.
 
 ---
 
@@ -140,6 +120,8 @@ Kemudian jalankan hasil build:
 - [x] Core rendering pipeline
 - [x] Chunk generation & meshing
 - [x] Player movement & collision
+- [x] Modular Gameplay (`CreativeMode`, `SurvivalMode`, `Inventory`)
+- [x] Real-time HUD & Diagnostic Telemetry (`F3` & Window Title)
 - [ ] Multiplayer support
 - [ ] Lighting engine (ambient occlusion)
 - [ ] Mod/plugin system
