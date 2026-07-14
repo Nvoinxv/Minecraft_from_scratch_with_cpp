@@ -160,12 +160,13 @@ void Application::Update()
         }
     }
 
-    // Pergerakan kamera/player berdasarkan input keyboard (W, S, A, D)
+    // Pergerakan kamera/player berdasarkan input keyboard (W, S, A, D, SPACE=Lompat)
     m_Camera.ProcessKeyboard(
         Input::IsKeyDown(GLFW_KEY_W),
         Input::IsKeyDown(GLFW_KEY_S),
         Input::IsKeyDown(GLFW_KEY_A),
         Input::IsKeyDown(GLFW_KEY_D),
+        Input::IsKeyPressed(GLFW_KEY_SPACE),  // IsKeyPressed agar lompat hanya 1x per tekan
         Time::GetDeltaTime(),
         &m_World
     );

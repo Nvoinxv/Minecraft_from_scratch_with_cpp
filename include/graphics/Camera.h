@@ -14,11 +14,13 @@ public:
 
     Camera(glm::vec3 spawnPosition);
 
+    // Gerak horizontal (WASD) + fisika vertikal (gravity, jump)
     void ProcessKeyboard(
         bool forward,
         bool backward,
         bool left,
         bool right,
+        bool jump,
         float deltaTime,
         World* world);
 
@@ -31,6 +33,7 @@ public:
 private:
 
     void UpdateVectors();
+    bool CheckCollision(const glm::vec3& pos, World* world) const;
 
 public:
 
@@ -44,6 +47,15 @@ public:
     float Pitch;
     float Speed;
     float Sensitivity;
+
+    // Fisika
+    float VelocityY   = 0.0f;   // Kecepatan vertikal saat ini (m/s)
+    bool  OnGround    = false;   // Apakah pemain sedang berdiri di tanah?
+
+    static constexpr float GRAVITY      = -25.0f;  // Gravitasi (unit/s^2)
+    static constexpr float JUMP_FORCE   =  10.0f;  // Dorongan awal saat lompat
+    static constexpr float PLAYER_H     =   1.7f;  // Tinggi pemain (mata ke kaki)
+    static constexpr float PLAYER_R     =   0.3f;  // Radius horizontal pemain
 };
 
 #endif
