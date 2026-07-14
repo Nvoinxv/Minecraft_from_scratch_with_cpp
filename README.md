@@ -99,7 +99,7 @@ main.cpp \
 src/glad.c \
 src/core/*.cpp \
 src/graphics/*.cpp \
-world/*.cpp \
+src/world/*.cpp \
 -Iinclude \
 -lglfw \
 -lGL \

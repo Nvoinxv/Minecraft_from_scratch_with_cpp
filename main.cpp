@@ -5,6 +5,8 @@
 // Bagian graphics
 #include "../include/graphics/Camera.h"
 
+#include <GLFW/glfw3.h>
+
 int core_implementation()
 {
     Window window(1280, 720, "Minecraft From Scratch By Nvoin");
