@@ -27,6 +27,10 @@ private:
 
     void Render();
 
+    void UpdateTelemetry();
+
+    void PrintTelemetryLog(bool forceImmediate = false);
+
 private:
 
     Window      m_Window;
@@ -34,4 +38,5 @@ private:
     Camera      m_Camera;
 
     bool        m_IsRunning;
+    float       m_TelemetryTimer;
 };
