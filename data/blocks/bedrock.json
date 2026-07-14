@@ -1,0 +1,10 @@
+{
+  "ID": 8,
+  "Name": "Bedrock",
+  "IsTransparent": false,
+  "Textures": {
+    "Top": "bedrock.png",
+    "Bottom": "bedrock.png",
+    "Side": "bedrock.png"
+  }
+}

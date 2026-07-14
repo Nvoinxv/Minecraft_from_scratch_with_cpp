@@ -23,9 +23,61 @@ void World::Shutdown()
     m_Chunks.clear();
 }
 
-void World::Update(float deltaTime)
+void World::Update(float deltaTime, const glm::vec3& playerPos)
 {
-    // Future chunk loading/unloading or block animations can go here
+    int playerChunkX = static_cast<int>(std::floor(playerPos.x / Chunk::CHUNK_WIDTH));
+    int playerChunkZ = static_cast<int>(std::floor(playerPos.z / Chunk::CHUNK_DEPTH));
+
+    if (playerChunkX != m_LastPlayerChunkX || playerChunkZ != m_LastPlayerChunkZ)
+    {
+        LoadChunksAroundPlayer(playerChunkX, playerChunkZ);
+        m_LastPlayerChunkX = playerChunkX;
+        m_LastPlayerChunkZ = playerChunkZ;
+    }
+}
+
+void World::LoadChunksAroundPlayer(int playerChunkX, int playerChunkZ)
+{
+    std::vector<Chunk*> chunksToMesh;
+
+    for (int cz = playerChunkZ - RENDER_DISTANCE; cz <= playerChunkZ + RENDER_DISTANCE; ++cz)
+    {
+        for (int cx = playerChunkX - RENDER_DISTANCE; cx <= playerChunkX + RENDER_DISTANCE; ++cx)
+        {
+            if (m_Chunks.find({cx, cz}) == m_Chunks.end())
+            {
+                GenerateChunk(cx, cz);
+                chunksToMesh.push_back(GetChunk(cx, cz));
+                
+                // Also trigger mesh update for neighbors to prevent gaps
+                Chunk* n1 = GetChunk(cx-1, cz); if (n1) chunksToMesh.push_back(n1);
+                Chunk* n2 = GetChunk(cx+1, cz); if (n2) chunksToMesh.push_back(n2);
+                Chunk* n3 = GetChunk(cx, cz-1); if (n3) chunksToMesh.push_back(n3);
+                Chunk* n4 = GetChunk(cx, cz+1); if (n4) chunksToMesh.push_back(n4);
+            }
+        }
+    }
+
+    // Unload chunks outside RENDER_DISTANCE + 2
+    for (auto it = m_Chunks.begin(); it != m_Chunks.end(); )
+    {
+        int dx = std::abs(it->first.first - playerChunkX);
+        int dz = std::abs(it->first.second - playerChunkZ);
+        if (dx > RENDER_DISTANCE + 2 || dz > RENDER_DISTANCE + 2)
+        {
+            it = m_Chunks.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+
+    // Rebuild meshes
+    for (Chunk* c : chunksToMesh)
+    {
+        c->GenerateMesh(this);
+    }
 }
 
 Chunk* World::GetChunk(int chunkX, int chunkZ) const
@@ -107,86 +159,91 @@ void World::GenerateTree(int globalX, int groundY, int globalZ)
     }
 }
 
-void World::GenerateTerrain()
+void World::GenerateChunk(int cx, int cz)
 {
+    auto chunk = std::make_unique<Chunk>();
+    chunk->Initialize(cx, cz);
+    m_Chunks[{cx, cz}] = std::move(chunk);
+
+    uint8_t bedrockID = BlockRegistry::Get().GetBlockByName("bedrock").ID;
     uint8_t stoneID = BlockRegistry::Get().GetBlockByName("stone").ID;
     uint8_t dirtID = BlockRegistry::Get().GetBlockByName("dirt").ID;
     uint8_t grassID = BlockRegistry::Get().GetBlockByName("grass").ID;
-    uint8_t cobbleID = BlockRegistry::Get().GetBlockByName("cobblestone").ID;
-    uint8_t torchID = BlockRegistry::Get().GetBlockByName("torch").ID;
-    uint8_t chestID = BlockRegistry::Get().GetBlockByName("chest").ID;
 
-    // Create 4x4 chunks around spawn (-2..1, -2..1) -> 64x64 blocks area
-    for (int cz = -2; cz <= 1; ++cz)
+    for (int z = 0; z < Chunk::CHUNK_DEPTH; ++z)
     {
-        for (int cx = -2; cx <= 1; ++cx)
+        for (int x = 0; x < Chunk::CHUNK_WIDTH; ++x)
         {
-            auto chunk = std::make_unique<Chunk>();
-            chunk->Initialize(cx, cz);
-            m_Chunks[{cx, cz}] = std::move(chunk);
-        }
-    }
+            int globalX = cx * Chunk::CHUNK_WIDTH + x;
+            int globalZ = cz * Chunk::CHUNK_DEPTH + z;
 
-    std::cout << "[World] Generating terrain hills across 16 chunks...\n";
+            // Pseudo-random noise for terrain height centered around Y=70
+            float wave = std::sin(globalX * 0.05f) * 4.0f + std::cos(globalZ * 0.04f) * 5.0f;
+            float detail = std::sin(globalX * 0.2f + globalZ * 0.2f) * 2.0f;
+            int groundY = 70 + static_cast<int>(wave + detail);
 
-    for (int cz = -2; cz <= 1; ++cz)
-    {
-        for (int cx = -2; cx <= 1; ++cx)
-        {
-            for (int z = 0; z < Chunk::CHUNK_DEPTH; ++z)
+            if (groundY < 10) groundY = 10;
+            if (groundY >= Chunk::CHUNK_HEIGHT - 20) groundY = Chunk::CHUNK_HEIGHT - 20;
+
+            for (int y = 0; y <= groundY; ++y)
             {
-                for (int x = 0; x < Chunk::CHUNK_WIDTH; ++x)
+                if (y == 0)
                 {
-                    int globalX = cx * Chunk::CHUNK_WIDTH + x;
-                    int globalZ = cz * Chunk::CHUNK_DEPTH + z;
-
-                    // Rolling terrain height using gentle sin waves
-                    float wave = std::sin(globalX * 0.08f) * 3.0f + std::cos(globalZ * 0.08f) * 3.0f;
-                    int groundY = 30 + static_cast<int>(wave);
-                    if (groundY < 5) groundY = 5;
-                    if (groundY >= Chunk::CHUNK_HEIGHT - 10) groundY = Chunk::CHUNK_HEIGHT - 10;
-
-                    for (int y = 0; y <= groundY; ++y)
-                    {
-                        if (y == groundY)
-                        {
-                            SetBlockGlobal(globalX, y, globalZ, grassID);
-                        }
-                        else if (y >= groundY - 3)
-                        {
-                            SetBlockGlobal(globalX, y, globalZ, dirtID);
-                        }
-                        else
-                        {
-                            SetBlockGlobal(globalX, y, globalZ, stoneID);
-                        }
-                    }
-
-                    // Procedural tree planting (pseudo-random based on coords)
-                    if ((globalX * 11 + globalZ * 17) % 67 == 0 && globalX != 0 && globalZ != -5)
-                    {
-                        GenerateTree(globalX, groundY + 1, globalZ);
-                    }
+                    SetBlockGlobal(globalX, y, globalZ, bedrockID); // Dasar dunia
                 }
+                else if (y == groundY)
+                {
+                    SetBlockGlobal(globalX, y, globalZ, grassID); // Permukaan
+                }
+                else if (y >= groundY - 10)
+                {
+                    SetBlockGlobal(globalX, y, globalZ, dirtID); // 10 Lapis Dirt
+                }
+                else
+                {
+                    SetBlockGlobal(globalX, y, globalZ, stoneID); // Sisa bawahnya Stone
+                }
+            }
+
+            // Procedural Random Trees
+            // Gunakan seed sederhana dari koordinat X dan Z
+            int treeHash = (globalX * 73856093 ^ globalZ * 19349663) % 1000;
+            if (treeHash < 0) treeHash = -treeHash;
+            
+            // Peluang pohon muncul sekitar 1 dari 150 blok permukaan
+            if (treeHash < 10 && globalX != 0 && globalZ != -5)
+            {
+                GenerateTree(globalX, groundY + 1, globalZ);
             }
         }
     }
+}
 
-    // Place a showcase monument right in front of spawn (0, groundY+1, -5)
-    int spawnGroundY = 30 + static_cast<int>(std::sin(0.0f) * 3.0f + std::cos(-5 * 0.08f) * 3.0f);
+void World::GenerateTerrain()
+{
+    // Monument di spawn
+    uint8_t cobbleID = BlockRegistry::Get().GetBlockByName("cobblestone").ID;
+    uint8_t torchID = BlockRegistry::Get().GetBlockByName("torch").ID;
+    uint8_t chestID = BlockRegistry::Get().GetBlockByName("chest").ID;
+    
+    // Spawn ground Y is around 70 (0, 70, -5)
+    float wave = std::sin(0.0f) * 4.0f + std::cos(-5 * 0.04f) * 5.0f;
+    float detail = std::sin(0.0f + (-5 * 0.2f)) * 2.0f;
+    int spawnGroundY = 70 + static_cast<int>(wave + detail);
+
+    // Initial load for spawn point
+    LoadChunksAroundPlayer(0, 0);
+
     SetBlockGlobal(-1, spawnGroundY + 1, -5, cobbleID);
     SetBlockGlobal(0, spawnGroundY + 1, -5, cobbleID);
     SetBlockGlobal(1, spawnGroundY + 1, -5, cobbleID);
     SetBlockGlobal(-1, spawnGroundY + 2, -5, torchID);
     SetBlockGlobal(0, spawnGroundY + 2, -5, chestID);
     SetBlockGlobal(1, spawnGroundY + 2, -5, torchID);
-
-    std::cout << "[World] Building chunk meshes (Face Culling)...\n";
-    for (auto& [coords, chunk] : m_Chunks)
-    {
-        chunk->GenerateMesh(this);
-    }
-    std::cout << "[World] World generation and meshing completed!\n";
+    
+    // Rebuild mesh around spawn just in case monument cuts chunk border
+    Chunk* c = GetChunk(0, 0);
+    if(c) c->GenerateMesh(this);
 }
 
 void World::Render(const Shader& shader) const

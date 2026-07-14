@@ -179,6 +179,15 @@ void Application::Update()
                 {
                     if (leftClick)
                     {
+                        // Lindungi Bedrock agar tidak bisa dihancurkan
+                        uint8_t targetID = m_World.GetBlockGlobal(bx, by, bz);
+                        uint8_t bedrockID = BlockRegistry::Get().GetBlockByName("bedrock").ID;
+                        if (targetID == bedrockID)
+                        {
+                            std::cout << "[Gameplay] Bedrock terlalu keras untuk dihancurkan!" << std::endl;
+                            break;
+                        }
+
                         // 1. Hancurkan blok tersebut (set id = 0)
                         m_World.SetBlockGlobal(bx, by, bz, 0);
                         std::cout << "[Gameplay] Blok dihancurkan pada koordinat X:" << bx << " Y:" << by << " Z:" << bz << std::endl;
@@ -248,7 +257,7 @@ void Application::Update()
     // World
     //---------------------------------------
 
-    m_World.Update(Time::GetDeltaTime());
+    m_World.Update(Time::GetDeltaTime(), m_Camera.Position);
 
     //---------------------------------------
     // Entity

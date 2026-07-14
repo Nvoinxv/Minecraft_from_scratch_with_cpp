@@ -11,7 +11,7 @@ class Chunk
 {
 public:
     static constexpr int CHUNK_WIDTH = 16;
-    static constexpr int CHUNK_HEIGHT = 64;
+    static constexpr int CHUNK_HEIGHT = 128;
     static constexpr int CHUNK_DEPTH = 16;
 
 public:
