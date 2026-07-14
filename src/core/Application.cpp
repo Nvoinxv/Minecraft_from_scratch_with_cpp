@@ -153,6 +153,92 @@ void Application::Update()
             static_cast<float>(Input::GetDeltaX()),
             static_cast<float>(Input::GetDeltaY())
         );
+
+        // Interaksi: Menghancurkan (Kiri) atau Menaruh (Kanan) Blok
+        bool leftClick = Input::IsMousePressed(GLFW_MOUSE_BUTTON_LEFT);
+        bool rightClick = Input::IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT);
+
+        if (leftClick || rightClick)
+        {
+            // Sederhana: Raycast maju sejauh 5 blok
+            glm::vec3 rayPos = m_Camera.Position;
+            glm::vec3 rayDir = m_Camera.Front;
+            float maxReach = 5.0f;
+            float stepSize = 0.05f;
+            
+            glm::vec3 previousPoint = rayPos;
+
+            for (float t = 0; t < maxReach; t += stepSize)
+            {
+                glm::vec3 currentPoint = rayPos + rayDir * t;
+                int bx = static_cast<int>(std::floor(currentPoint.x));
+                int by = static_cast<int>(std::floor(currentPoint.y));
+                int bz = static_cast<int>(std::floor(currentPoint.z));
+
+                if (m_World.GetBlockGlobal(bx, by, bz) != 0) // Menabrak blok solid
+                {
+                    if (leftClick)
+                    {
+                        // 1. Hancurkan blok tersebut (set id = 0)
+                        m_World.SetBlockGlobal(bx, by, bz, 0);
+                        std::cout << "[Gameplay] Blok dihancurkan pada koordinat X:" << bx << " Y:" << by << " Z:" << bz << std::endl;
+                    }
+                    else if (rightClick)
+                    {
+                        // 1. Taruh blok di ruang kosong tepat SEBELUM menabrak blok (memakai previousPoint)
+                        int px = static_cast<int>(std::floor(previousPoint.x));
+                        int py = static_cast<int>(std::floor(previousPoint.y));
+                        int pz = static_cast<int>(std::floor(previousPoint.z));
+                        
+                        // Jangan taruh balok jika pemain sedang berdiri di dalam koordinat tersebut (kasar checking)
+                        if (py != static_cast<int>(std::floor(m_Camera.Position.y))) 
+                        {
+                            // Taruh balok Cobblestone (ID 4)
+                            m_World.SetBlockGlobal(px, py, pz, 4);
+                            std::cout << "[Gameplay] Blok ditaruh pada koordinat X:" << px << " Y:" << py << " Z:" << pz << std::endl;
+                            
+                            // Ganti target koordinat mesh update ke koordinat blok yang baru ditaruh
+                            bx = px;
+                            bz = pz;
+                        }
+                        else
+                        {
+                            break; // Pemain menghalangi
+                        }
+                    }
+
+                    // 2. Perbarui mesh chunk utama tempat perubahan terjadi
+                    int chunkX = static_cast<int>(std::floor(static_cast<float>(bx) / Chunk::CHUNK_WIDTH));
+                    int chunkZ = static_cast<int>(std::floor(static_cast<float>(bz) / Chunk::CHUNK_DEPTH));
+                    Chunk* targetChunk = m_World.GetChunk(chunkX, chunkZ);
+                    if (targetChunk) targetChunk->GenerateMesh(&m_World);
+
+                    // 3. Perbarui mesh chunk tetangga jika blok berada di perbatasan chunk (agar culling face sinkron)
+                    int localX = bx - chunkX * Chunk::CHUNK_WIDTH;
+                    int localZ = bz - chunkZ * Chunk::CHUNK_DEPTH;
+
+                    if (localX == 0) {
+                        Chunk* neighbor = m_World.GetChunk(chunkX - 1, chunkZ);
+                        if (neighbor) neighbor->GenerateMesh(&m_World);
+                    } else if (localX == Chunk::CHUNK_WIDTH - 1) {
+                        Chunk* neighbor = m_World.GetChunk(chunkX + 1, chunkZ);
+                        if (neighbor) neighbor->GenerateMesh(&m_World);
+                    }
+
+                    if (localZ == 0) {
+                        Chunk* neighbor = m_World.GetChunk(chunkX, chunkZ - 1);
+                        if (neighbor) neighbor->GenerateMesh(&m_World);
+                    } else if (localZ == Chunk::CHUNK_DEPTH - 1) {
+                        Chunk* neighbor = m_World.GetChunk(chunkX, chunkZ + 1);
+                        if (neighbor) neighbor->GenerateMesh(&m_World);
+                    }
+
+                    break; // Berhenti mengecek setelah satu blok berhasil dihancurkan/ditaruh
+                }
+                
+                previousPoint = currentPoint; // Simpan titik history untuk deteksi ruang kosong
+            }
+        }
     }
 
     // Perbarui HUD Telemetri (Window Title dan Console Debug)
