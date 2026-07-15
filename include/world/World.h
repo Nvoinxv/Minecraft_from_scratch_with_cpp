@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include <utility>
+#include <vector>
 #include <glm/glm.hpp>
 #include "world/Chunk.h"
 #include "graphics/Shader.h"
@@ -27,19 +28,19 @@ public:
     uint8_t GetBlockGlobal(int x, int y, int z) const;
     bool IsBlockTransparent(int x, int y, int z) const;
 
-    void GenerateTerrain(); // No longer pre-generates statically
+    void GenerateTerrain();
     void LoadChunksAroundPlayer(int playerChunkX, int playerChunkZ);
     void GenerateChunk(int chunkX, int chunkZ);
     void GenerateTree(int globalX, int groundY, int globalZ);
-    
     int FindSurfaceY(int x, int z) const;
 
-#include <vector>
+    // Render distance in chunks. Single source of truth for chunk load radius
+    // AND fog distance — never hardcode this value anywhere else.
+    static constexpr int GetRenderDistanceInChunks() { return RENDER_DISTANCE; }
 
 private:
     std::map<std::pair<int, int>, std::unique_ptr<Chunk>> m_Chunks;
     std::vector<std::pair<int, int>> m_MeshUpdateQueue;
-    
     int m_LastPlayerChunkX = -999999;
     int m_LastPlayerChunkZ = -999999;
     static constexpr int RENDER_DISTANCE = 4;

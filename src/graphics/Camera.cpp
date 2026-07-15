@@ -144,15 +144,21 @@ void Camera::ProcessKeyboard(
     if (right)    hMove += flatRight * vel;
 
     // Terapkan horizontal X dulu, rollback kalau nabrak
-    // feetEpsilon=1.0f: geser bottom AABB 1 unit ke atas agar blok lantai
-    // yang dipijak tidak dihitung — menghindari "frozen on ground" bug.
+    // FIX: feetEpsilon sebelumnya 1.0f (satu blok penuh) -> menggeser seluruh
+    // jendela pengecekan collision ke atas kepala, sehingga tembok setinggi
+    // normal (1 blok, sejajar kaki) TIDAK PERNAH terdeteksi -> pemain tembus
+    // tembok. Nilai kecil (0.1f) cukup untuk menghindari self-catch pada
+    // lantai yang dipijak (karena minY sudah otomatis > level kaki begitu
+    // feetEpsilon > 0), tanpa membuang cakupan badan bagian bawah.
+    const float kHorizontalFeetEpsilon = 0.1f;
+
     Position.x += hMove.x;
-    if (CheckCollision(Position, world, 1.0f))
+    if (CheckCollision(Position, world, kHorizontalFeetEpsilon))
         Position.x -= hMove.x;
 
     // Terapkan horizontal Z
     Position.z += hMove.z;
-    if (CheckCollision(Position, world, 1.0f))
+    if (CheckCollision(Position, world, kHorizontalFeetEpsilon))
         Position.z -= hMove.z;
 
     /// -------------------------------------------------------

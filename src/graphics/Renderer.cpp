@@ -95,9 +95,16 @@ void Renderer::DrawMesh(
     mesh.Draw();
 }
 
-void Renderer::DrawWorld(
-    const World& world,
-    const Shader& shader) const
+void Renderer::DrawWorld(const World& world, const Shader& shader) const
 {
+    shader.Use();
+
+    // Fog color HARUS identik dengan clear color, biar chunk jauh menyatu ke langit
+    shader.SetVec3("u_FogColor", glm::vec3(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2]));
+
+    // Fog mulai di 60% render distance, full di 90% — beri jarak transisi sebelum cutoff
+    shader.SetFloat("u_FogStart", m_RenderDistance * 0.6f);
+    shader.SetFloat("u_FogEnd",   m_RenderDistance * 0.9f);
+
     world.Render(shader);
 }

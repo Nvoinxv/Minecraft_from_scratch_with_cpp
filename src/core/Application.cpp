@@ -103,7 +103,12 @@ bool Application::Initialize()
     static_cast<int>(m_Camera.Position.z));
 
     m_Camera.Position.y = static_cast<float>(spawnGroundY + 1) + Camera::PLAYER_H;
-
+    
+    // Fog & render distance harus satu sumber angka: World::RENDER_DISTANCE.
+    // Kalau lo ubah RENDER_DISTANCE di World.h, fog otomatis ikut menyesuaikan.
+    m_Renderer.SetRenderDistance(
+        static_cast<float>(m_World.GetRenderDistanceInChunks() * Chunk::CHUNK_WIDTH)
+    );
     std::cout << "[Application] Spawn Y dikoreksi -> groundY=" << spawnGroundY
             << " | Camera.Position.y=" << m_Camera.Position.y << std::endl;
     
