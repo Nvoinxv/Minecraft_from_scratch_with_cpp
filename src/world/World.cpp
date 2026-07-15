@@ -137,6 +137,20 @@ uint8_t World::GetBlockGlobal(int x, int y, int z) const
     return 0; // Air if unloaded
 }
 
+int World::FindSurfaceY(int x, int z) const
+{
+    // Scan dari atas ke bawah, cari blok solid pertama.
+    // CHUNK_HEIGHT-1 karena index tertinggi array blok adalah CHUNK_HEIGHT-1.
+    for (int y = Chunk::CHUNK_HEIGHT - 1; y >= 0; --y)
+    {
+        if (GetBlockGlobal(x, y, z) != 0)
+        {
+            return y;
+        }
+    }
+    return 0; // Fallback kalau kolom benar-benar kosong (seharusnya tidak terjadi)
+}
+
 bool World::IsBlockTransparent(int x, int y, int z) const
 {
     if (y < 0) return false;

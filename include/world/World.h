@@ -31,6 +31,8 @@ public:
     void LoadChunksAroundPlayer(int playerChunkX, int playerChunkZ);
     void GenerateChunk(int chunkX, int chunkZ);
     void GenerateTree(int globalX, int groundY, int globalZ);
+    
+    int FindSurfaceY(int x, int z) const;
 
 #include <vector>
 

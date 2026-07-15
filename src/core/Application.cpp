@@ -98,7 +98,15 @@ bool Application::Initialize()
     glBindVertexArray(0);
 
     m_World.Initialize();
+    int spawnGroundY = m_World.FindSurfaceY(
+    static_cast<int>(m_Camera.Position.x),
+    static_cast<int>(m_Camera.Position.z));
 
+    m_Camera.Position.y = static_cast<float>(spawnGroundY + 1) + Camera::PLAYER_H;
+
+    std::cout << "[Application] Spawn Y dikoreksi -> groundY=" << spawnGroundY
+            << " | Camera.Position.y=" << m_Camera.Position.y << std::endl;
+    
     m_IsRunning = true;
     m_TelemetryTimer = 0.0f;
 
@@ -224,21 +232,35 @@ void Application::Update()
                         int px = static_cast<int>(std::floor(previousPoint.x));
                         int py = static_cast<int>(std::floor(previousPoint.y));
                         int pz = static_cast<int>(std::floor(previousPoint.z));
-                        
-                        // Jangan taruh balok jika pemain sedang berdiri di dalam koordinat tersebut (kasar checking)
-                        if (py != static_cast<int>(std::floor(m_Camera.Position.y))) 
+
+                        // Cek overlap penuh 3D (X, Y, Z) terhadap bounding box player,
+                        // bukan cuma Y saja. Sebelumnya cek Y-only menyebabkan penaruhan
+                        // ke samping/atas gagal walau X/Z jelas berbeda dari posisi badan.
+                        float playerMinX = m_Camera.Position.x - Camera::PLAYER_R;
+                        float playerMaxX = m_Camera.Position.x + Camera::PLAYER_R;
+                        float playerMinY = m_Camera.Position.y - Camera::PLAYER_H;
+                        float playerMaxY = m_Camera.Position.y + 0.2f;
+                        float playerMinZ = m_Camera.Position.z - Camera::PLAYER_R;
+                        float playerMaxZ = m_Camera.Position.z + Camera::PLAYER_R;
+
+                        bool overlapsPlayer =
+                            (px + 1 > playerMinX && px < playerMaxX) &&
+                            (py + 1 > playerMinY && py < playerMaxY) &&
+                            (pz + 1 > playerMinZ && pz < playerMaxZ);
+
+                        if (!overlapsPlayer)
                         {
                             // Taruh balok Cobblestone (ID 4)
                             m_World.SetBlockGlobal(px, py, pz, 4);
                             std::cout << "[Gameplay] Blok ditaruh pada koordinat X:" << px << " Y:" << py << " Z:" << pz << std::endl;
-                            
+
                             // Ganti target koordinat mesh update ke koordinat blok yang baru ditaruh
                             bx = px;
                             bz = pz;
                         }
                         else
                         {
-                            break; // Pemain menghalangi
+                            break; // Pemain benar-benar menghalangi (overlap 3D penuh)
                         }
                     }
 
