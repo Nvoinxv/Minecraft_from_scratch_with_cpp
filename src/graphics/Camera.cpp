@@ -155,29 +155,79 @@ void Camera::ProcessKeyboard(
     if (CheckCollision(Position, world, 1.0f))
         Position.z -= hMove.z;
 
-    // -------------------------------------------------------
+    /// -------------------------------------------------------
     // Gravitasi & Lompat
     // -------------------------------------------------------
-    // Cek apakah ada tanah tepat di bawah kaki pemain
-    glm::vec3 belowPos = Position;
-    belowPos.y -= 0.05f;
-    OnGround = CheckCollision(belowPos, world) && (VelocityY <= 0.0f);
+    // Cek apakah ada tanah TEPAT DI BAWAH KAKI (bukan sepanjang seluruh badan).
+    // Bug sebelumnya: box yang dicek terentang dari kaki sampai hampir ke level
+    // mata (karena maxY = pos.y + 0.2 selalu dekat mata, feetEpsilon default 0
+    // hanya menggeser minY dari kaki). Di tangga/step yang tidak rata, box
+    // selebar itu gampang salah baca sehingga OnGround gagal balik true
+    // setelah naik/turun blok, dan lompat berikutnya jadi terkunci.
+    //
+    // Perbaikan: pindahkan titik cek ke level kaki (Position.y - PLAYER_H),
+    // lalu pakai feetEpsilon supaya box yang dicek jadi TIPIS (~0.25 unit)
+    // dan benar-benar hanya menyentuh area kaki, bukan seluruh badan.
+    glm::vec3 feetPos = Position;
+    feetPos.y -= PLAYER_H;
+    OnGround = CheckCollision(feetPos, world, PLAYER_H - 0.05f) && (VelocityY <= 0.0f);
 
-    // Lompat hanya bisa kalau di tanah
-    if (jump && OnGround) {
-        VelocityY = JUMP_FORCE;
-        OnGround = false;
+    if (OnGround)
+    {
+        // Reset jatah lompat tambahan tiap kali benar-benar menapak tanah
+        m_AirJumpsUsed = 0;
+    }
+
+    if (jump)
+    {
+        if (OnGround)
+        {
+            // Lompat dari tanah - bisa berkali-kali selama masih menapak,
+            // tidak dibatasi jumlah total (survival maupun creative).
+            VelocityY = JUMP_FORCE;
+            OnGround = false;
+        }
+        else if (IsCreative && m_AirJumpsUsed < MAX_AIR_JUMPS)
+        {
+            // Khusus Creative: lompat kedua di udara (melayang/double jump).
+            // Survival tidak masuk cabang ini sama sekali -> tidak bisa lompat di udara.
+            VelocityY = JUMP_FORCE;
+            m_AirJumpsUsed++;
+        }
+        // Survival + sudah di udara, atau creative tapi jatah air-jump habis -> diabaikan
     }
 
     // Terapkan gravitasi ke velocity vertikal
     if (!OnGround)
         VelocityY += GRAVITY * deltaTime;
 
-    // Terapkan gerakan vertikal, rollback jika nabrak
-    float dy = VelocityY * deltaTime;
-    Position.y += dy;
-    if (CheckCollision(Position, world)) {
-        Position.y -= dy;
-        VelocityY = 0.0f;   // Reset velocity (baik mendarat maupun menabrak langit-langit)
+    // Cap kecepatan jatuh (terminal velocity). Tanpa ini, VelocityY membesar
+    // tanpa batas selama jatuh -> dy per frame makin besar -> gap collision
+    // residual (lihat di bawah) ikut membesar tanpa batas -> OnGround bisa
+    // gagal terdeteksi permanen setelah jatuh dari ketinggian.
+    if (VelocityY < TERMINAL_VELOCITY)
+        VelocityY = TERMINAL_VELOCITY;
+
+    // Terapkan gerakan vertikal secara BERTAHAP (substep), bukan sekaligus.
+    // Alasan: rollback "all-or-nothing" sebelumnya membatalkan SELURUH dy
+    // saat kena collision, menyisakan gap antara kaki dan lantai sebesar
+    // |dy| penuh — bisa besar kalau VelocityY tinggi. Substep kecil (maks
+    // 0.05 unit per langkah) membuat gap residual selalu kecil dan konstan,
+    // independen dari seberapa cepat pemain jatuh.
+    float dyTotal = VelocityY * deltaTime;
+    const float maxStep = 0.05f;
+    int steps = static_cast<int>(std::ceil(std::abs(dyTotal) / maxStep));
+    if (steps < 1) steps = 1;
+    if (steps > 64) steps = 64; // Jaga-jaga kalau deltaTime melonjak (lag spike)
+
+    float dyStep = dyTotal / static_cast<float>(steps);
+    for (int i = 0; i < steps; ++i)
+    {
+        Position.y += dyStep;
+        if (CheckCollision(Position, world)) {
+            Position.y -= dyStep;
+            VelocityY = 0.0f;
+            break;
+        }
     }
 }
