@@ -218,5 +218,3 @@ void Input::ScrollCallback(
     s_ScrollX = xOffset;
     s_ScrollY = yOffset;
 }
-
-}
