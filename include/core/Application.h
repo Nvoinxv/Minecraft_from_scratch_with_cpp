@@ -39,7 +39,11 @@ private:
     Window      m_Window;
     Renderer    m_Renderer;
     Camera      m_Camera;
-    Shader      m_Shader;
+    Shader m_Shader;
+    Shader m_CrosshairShader;
+
+    GLuint m_CrosshairVAO = 0;
+    GLuint m_CrosshairVBO = 0;
     World       m_World;
 
     bool        m_IsRunning;

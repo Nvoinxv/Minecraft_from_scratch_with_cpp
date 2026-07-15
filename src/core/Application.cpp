@@ -74,6 +74,29 @@ bool Application::Initialize()
         std::cerr << "[Application] ERROR: Failed to load block shaders!" << std::endl;
         return false;
     }
+    if (!m_CrosshairShader.Load("assets/shaders/crosshair.vert", "assets/shaders/crosshair.frag"))
+    {
+        std::cerr << "[Application] ERROR: Failed to load crosshair shaders!" << std::endl;
+    }
+
+    // Set up crosshair (2 lines forming a +)
+    float crosshairVertices[] = {
+        // Horizontal line
+        -0.02f, 0.0f,
+         0.02f, 0.0f,
+        // Vertical line
+         0.0f, -0.035f,
+         0.0f,  0.035f
+    };
+    glGenVertexArrays(1, &m_CrosshairVAO);
+    glGenBuffers(1, &m_CrosshairVBO);
+    glBindVertexArray(m_CrosshairVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_CrosshairVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(crosshairVertices), crosshairVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0);
+
     m_World.Initialize();
 
     m_IsRunning = true;
@@ -149,14 +172,22 @@ void Application::Update()
     // Pergerakan sudut pandang kamera berdasarkan rotasi mouse (hanya saat kursor dikunci)
     if (glfwGetInputMode(m_Window.GetNativeWindow(), GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
     {
-        m_Camera.ProcessMouse(
-            static_cast<float>(Input::GetDeltaX()),
-            static_cast<float>(Input::GetDeltaY())
-        );
+        float mouseDeltaX = static_cast<float>(Input::GetDeltaX());
+        float mouseDeltaY = static_cast<float>(Input::GetDeltaY());
+
+        // [Trackpad Workaround] Izinkan Tombol Panah (Arrow Keys) untuk merotasi kamera
+        float arrowLookSpeed = 1000.0f * Time::GetDeltaTime(); 
+        if (Input::IsKeyDown(GLFW_KEY_LEFT))  mouseDeltaX -= arrowLookSpeed;
+        if (Input::IsKeyDown(GLFW_KEY_RIGHT)) mouseDeltaX += arrowLookSpeed;
+        if (Input::IsKeyDown(GLFW_KEY_UP))    mouseDeltaY -= arrowLookSpeed;
+        if (Input::IsKeyDown(GLFW_KEY_DOWN))  mouseDeltaY += arrowLookSpeed;
+
+        m_Camera.ProcessMouse(mouseDeltaX, mouseDeltaY);
 
         // Interaksi: Menghancurkan (Kiri) atau Menaruh (Kanan) Blok
-        bool leftClick = Input::IsMousePressed(GLFW_MOUSE_BUTTON_LEFT);
-        bool rightClick = Input::IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT);
+        // [Trackpad Workaround] Izinkan tombol Q (Kiri/Hancur) dan E (Kanan/Taruh)
+        bool leftClick = Input::IsMousePressed(GLFW_MOUSE_BUTTON_LEFT) || Input::IsKeyPressed(GLFW_KEY_Q);
+        bool rightClick = Input::IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT) || Input::IsKeyPressed(GLFW_KEY_E);
 
         if (leftClick || rightClick)
         {
@@ -383,6 +414,24 @@ void Application::Render()
     // UI
     //---------------------------------------
 
+    // Render Crosshair (Tanda '+') di tengah layar, hanya jika mode kursor sedang dikunci (mode FPS)
+    if (glfwGetInputMode(m_Window.GetNativeWindow(), GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
+    {
+        glDisable(GL_DEPTH_TEST); // Agar crosshair selalu tampil di depan blok
+
+        // Menggunakan Logic Op Invert agar warna crosshair kontras (kebalikan) dari blok di belakangnya
+        glEnable(GL_COLOR_LOGIC_OP);
+        glLogicOp(GL_INVERT);
+
+        m_CrosshairShader.Use();
+        glBindVertexArray(m_CrosshairVAO);
+        glDrawArrays(GL_LINES, 0, 4);
+        glBindVertexArray(0);
+
+        glDisable(GL_COLOR_LOGIC_OP);
+        glEnable(GL_DEPTH_TEST);
+    }
+
     m_Renderer.EndFrame();
 }
 
@@ -406,6 +455,9 @@ void Application::Shutdown()
     std::cout << "[Application] Shutting down World, Shader & BlockRegistry..." << std::endl;
     m_World.Shutdown();
     m_Shader.Destroy();
+    m_CrosshairShader.Destroy();
+    glDeleteVertexArrays(1, &m_CrosshairVAO);
+    glDeleteBuffers(1, &m_CrosshairVBO);
     BlockRegistry::Get().Shutdown();
 
     std::cout << "[Application] Shutting down Renderer..." << std::endl;

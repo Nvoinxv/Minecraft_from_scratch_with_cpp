@@ -70,6 +70,7 @@ private:
 
 private:
 
+    static void MouseCallback(GLFWwindow* window, double xpos, double ypos);
     static void ScrollCallback(
         GLFWwindow* window,
         double xOffset,
