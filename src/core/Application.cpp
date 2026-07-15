@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include "world/ChunkMesh.h"
 
 Application::Application()
     :
@@ -273,7 +274,8 @@ void Application::Update()
                     int chunkX = static_cast<int>(std::floor(static_cast<float>(bx) / Chunk::CHUNK_WIDTH));
                     int chunkZ = static_cast<int>(std::floor(static_cast<float>(bz) / Chunk::CHUNK_DEPTH));
                     Chunk* targetChunk = m_World.GetChunk(chunkX, chunkZ);
-                    if (targetChunk) targetChunk->GenerateMesh(&m_World);
+                    if (targetChunk && targetChunk->GetMesh())
+                        targetChunk->GetMesh()->Build(*targetChunk, &m_World);
 
                     // 3. Perbarui mesh chunk tetangga jika blok berada di perbatasan chunk (agar culling face sinkron)
                     int localX = bx - chunkX * Chunk::CHUNK_WIDTH;
@@ -281,18 +283,18 @@ void Application::Update()
 
                     if (localX == 0) {
                         Chunk* neighbor = m_World.GetChunk(chunkX - 1, chunkZ);
-                        if (neighbor) neighbor->GenerateMesh(&m_World);
+                        if (neighbor && neighbor->GetMesh()) neighbor->GetMesh()->Build(*neighbor, &m_World);
                     } else if (localX == Chunk::CHUNK_WIDTH - 1) {
                         Chunk* neighbor = m_World.GetChunk(chunkX + 1, chunkZ);
-                        if (neighbor) neighbor->GenerateMesh(&m_World);
+                        if (neighbor && neighbor->GetMesh()) neighbor->GetMesh()->Build(*neighbor, &m_World);
                     }
 
                     if (localZ == 0) {
                         Chunk* neighbor = m_World.GetChunk(chunkX, chunkZ - 1);
-                        if (neighbor) neighbor->GenerateMesh(&m_World);
+                        if (neighbor && neighbor->GetMesh()) neighbor->GetMesh()->Build(*neighbor, &m_World);
                     } else if (localZ == Chunk::CHUNK_DEPTH - 1) {
                         Chunk* neighbor = m_World.GetChunk(chunkX, chunkZ + 1);
-                        if (neighbor) neighbor->GenerateMesh(&m_World);
+                        if (neighbor && neighbor->GetMesh()) neighbor->GetMesh()->Build(*neighbor, &m_World);
                     }
 
                     break; // Berhenti mengecek setelah satu blok berhasil dihancurkan/ditaruh

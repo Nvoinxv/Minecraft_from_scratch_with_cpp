@@ -1,5 +1,6 @@
 #include "world/World.h"
 #include "world/Block.h"
+#include "world/ChunkMesh.h"
 #include <cmath>
 #include <iostream>
 #include <algorithm>
@@ -43,9 +44,9 @@ void World::Update(float deltaTime, const glm::vec3& playerPos)
         m_MeshUpdateQueue.erase(m_MeshUpdateQueue.begin());
 
         Chunk* c = GetChunk(coords.first, coords.second);
-        if (c)
+        if (c && c->GetMesh())
         {
-            c->GenerateMesh(this);
+            c->GetMesh()->Build(*c, this);
         }
     }
 }
@@ -275,7 +276,7 @@ void World::GenerateTerrain()
     
     // Rebuild mesh around spawn just in case monument cuts chunk border
     Chunk* c = GetChunk(0, 0);
-    if(c) c->GenerateMesh(this);
+    if (c && c->GetMesh()) c->GetMesh()->Build(*c, this);
 }
 
 void World::Render(const Shader& shader) const
@@ -288,6 +289,7 @@ void World::Render(const Shader& shader) const
 
     for (const auto& [coords, chunk] : m_Chunks)
     {
-        chunk->Draw();
+        if (chunk && chunk->GetMesh() && chunk->GetMesh()->IsValid())
+            chunk->GetMesh()->Draw();
     }
 }
