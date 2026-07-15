@@ -24,6 +24,7 @@ BlockRegistry::BlockRegistry()
     m_AirBlock.DisplayName = "Air";
     m_AirBlock.IsSolid = false;
     m_AirBlock.IsTransparent = true;
+    m_AirBlock.RenderType = BlockRenderType::Cube; // irrelevant for air, never meshed
     m_BlocksByID[0] = m_AirBlock;
     m_IDsByName["air"] = 0;
 }
@@ -39,6 +40,20 @@ void BlockRegistry::Shutdown()
     m_IDsByName.clear();
     m_TextureToTileIndex.clear();
     m_AtlasTexture.Destroy();
+}
+
+BlockRenderType BlockRegistry::ParseRenderType(const std::string& value)
+{
+    if (value == "sprite" || value == "cross")
+    {
+        return BlockRenderType::Sprite;
+    }
+    if (value != "cube" && !value.empty())
+    {
+        std::cerr << "[BlockRegistry] WARNING: Unknown render_type '" << value
+                   << "', defaulting to 'cube'\n";
+    }
+    return BlockRenderType::Cube;
 }
 
 bool BlockRegistry::Initialize(const std::string& blocksDirectory)
@@ -80,6 +95,7 @@ bool BlockRegistry::Initialize(const std::string& blocksDirectory)
                 block.IsTransparent = j.value("is_transparent", false);
                 block.IsLightSource = j.value("is_light_source", false);
                 block.LightLevel = j.value("light_level", 0);
+                block.RenderType = ParseRenderType(j.value("render_type", std::string("cube")));
 
                 if (j.contains("textures") && j["textures"].is_object())
                 {
@@ -106,7 +122,8 @@ bool BlockRegistry::Initialize(const std::string& blocksDirectory)
                 m_IDsByName[lowerName] = block.ID;
 
                 std::cout << "[BlockRegistry] Registered Block ID " << (int)block.ID 
-                          << " (" << block.DisplayName << ") | Solid: " << (block.IsSolid ? "Yes" : "No") << "\n";
+                          << " (" << block.DisplayName << ") | Solid: " << (block.IsSolid ? "Yes" : "No")
+                          << " | RenderType: " << (block.RenderType == BlockRenderType::Sprite ? "Sprite" : "Cube") << "\n";
             }
             catch (const std::exception& e)
             {
