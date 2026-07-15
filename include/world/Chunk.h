@@ -1,7 +1,10 @@
 #pragma once
 
+#include <memory>
 #include <cstdint>
 #include <glm/glm.hpp>
+
+class ChunkMesh;
 
 class Chunk
 {
@@ -14,7 +17,6 @@ public:
 public:
 
     Chunk();
-
     ~Chunk();
 
     Chunk(const Chunk&) = delete;
@@ -53,6 +55,8 @@ public:
 
     glm::vec3 GetWorldPosition() const;
 
+    ChunkMesh* GetMesh() const;
+
 private:
 
     uint8_t m_Blocks
@@ -65,4 +69,6 @@ private:
     int m_ChunkZ;
 
     glm::vec3 m_WorldPosition;
+
+    std::unique_ptr<ChunkMesh> m_ChunkMesh;
 };

@@ -1,17 +1,14 @@
 #include "world/Chunk.h"
-
+#include "world/ChunkMesh.h"
 #include <cstring>
 
 Chunk::Chunk()
     :
     m_ChunkX(0),
     m_ChunkZ(0),
-    m_WorldPosition(0.0f)
+    m_WorldPosition(0.0f),
+    m_ChunkMesh(std::make_unique<ChunkMesh>())
 {
-    std::memset(
-        m_Blocks,
-        0,
-        sizeof(m_Blocks));
 }
 
 Chunk::~Chunk()
@@ -91,6 +88,11 @@ int Chunk::GetChunkX() const
 int Chunk::GetChunkZ() const
 {
     return m_ChunkZ;
+}
+
+ChunkMesh* Chunk::GetMesh() const
+{
+    return m_ChunkMesh.get();
 }
 
 glm::vec3 Chunk::GetWorldPosition() const
