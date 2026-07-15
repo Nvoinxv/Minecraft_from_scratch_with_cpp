@@ -2,6 +2,7 @@
 
 #include "world/Chunk.h"
 #include "world/World.h"
+#include "world/Block.h" 
 
 ChunkMesh::ChunkMesh()
 {
@@ -12,22 +13,89 @@ ChunkMesh::~ChunkMesh()
     Destroy();
 }
 
-void ChunkMesh::Build(
-    const Chunk& chunk,
-    const World* world)
+void ChunkMesh::Build(const Chunk& chunk, const World* world)
 {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 
-    /*
-        Nantinya:
+    int cx = chunk.GetChunkX();
+    int cz = chunk.GetChunkZ();
 
-        1. Loop seluruh block
-        2. Cek apakah block kosong
-        3. Cek keenam sisi
-        4. Jika terlihat
-             AddFace(...)
-    */
+    for (int x = 0; x < Chunk::CHUNK_WIDTH; ++x)
+    {
+        for (int z = 0; z < Chunk::CHUNK_DEPTH; ++z)
+        {
+            for (int y = 0; y < Chunk::CHUNK_HEIGHT; ++y)
+            {
+                uint8_t id = chunk.GetBlock(x, y, z);
+                if (id == 0) continue;
+
+                glm::vec3 base(
+                    static_cast<float>(cx * Chunk::CHUNK_WIDTH + x),
+                    static_cast<float>(y),
+                    static_cast<float>(cz * Chunk::CHUNK_DEPTH + z)
+                );
+
+                const BlockData& blockDef = BlockRegistry::Get().GetBlock(id);
+                glm::vec2 uvMin, uvMax;
+
+                // +Y (atas / Top)
+                if (IsFaceVisible(chunk, x, y + 1, z, world))
+                {
+                    BlockRegistry::Get().GetFaceUVs(blockDef.FaceTextureIndex[(int)BlockFace::Top], uvMin, uvMax);
+                    AddFace(vertices, indices,
+                        base + glm::vec3(0,1,1), base + glm::vec3(1,1,1),
+                        base + glm::vec3(1,1,0), base + glm::vec3(0,1,0),
+                        uvMin, uvMax, glm::vec3(0,1,0));
+                }
+                // -Y (bawah / Bottom)
+                if (IsFaceVisible(chunk, x, y - 1, z, world))
+                {
+                    BlockRegistry::Get().GetFaceUVs(blockDef.FaceTextureIndex[(int)BlockFace::Bottom], uvMin, uvMax);
+                    AddFace(vertices, indices,
+                        base + glm::vec3(0,0,0), base + glm::vec3(1,0,0),
+                        base + glm::vec3(1,0,1), base + glm::vec3(0,0,1),
+                        uvMin, uvMax, glm::vec3(0,-1,0));
+                }
+                // +Z (Front)
+                if (IsFaceVisible(chunk, x, y, z + 1, world))
+                {
+                    BlockRegistry::Get().GetFaceUVs(blockDef.FaceTextureIndex[(int)BlockFace::Front], uvMin, uvMax);
+                    AddFace(vertices, indices,
+                    base + glm::vec3(0,0,1), base + glm::vec3(1,0,1),
+                    base + glm::vec3(1,1,1), base + glm::vec3(0,1,1),
+                    uvMin, uvMax, glm::vec3(0,0,1));
+                }
+                // -Z (Back)
+                if (IsFaceVisible(chunk, x, y, z - 1, world))
+                {
+                    BlockRegistry::Get().GetFaceUVs(blockDef.FaceTextureIndex[(int)BlockFace::Back], uvMin, uvMax);
+                    AddFace(vertices, indices,
+                    base + glm::vec3(1,0,0), base + glm::vec3(0,0,0),
+                    base + glm::vec3(0,1,0), base + glm::vec3(1,1,0),
+                    uvMin, uvMax, glm::vec3(0,0,-1));
+                }
+                // -X (Left)
+                if (IsFaceVisible(chunk, x - 1, y, z, world))
+                {
+                    BlockRegistry::Get().GetFaceUVs(blockDef.FaceTextureIndex[(int)BlockFace::Left], uvMin, uvMax);
+                    AddFace(vertices, indices,
+                        base + glm::vec3(0,0,0), base + glm::vec3(0,0,1),
+                        base + glm::vec3(0,1,1), base + glm::vec3(0,1,0),
+                        uvMin, uvMax, glm::vec3(-1,0,0));
+                }
+                // +X (Right)
+                if (IsFaceVisible(chunk, x + 1, y, z, world))
+                {
+                    BlockRegistry::Get().GetFaceUVs(blockDef.FaceTextureIndex[(int)BlockFace::Right], uvMin, uvMax);
+                    AddFace(vertices, indices,
+                        base + glm::vec3(1,0,1), base + glm::vec3(1,0,0),
+                        base + glm::vec3(1,1,0), base + glm::vec3(1,1,1),
+                        uvMin, uvMax, glm::vec3(1,0,0));
+                }
+            }
+        }
+    }
 
     m_Mesh.Create(vertices, indices);
 }
@@ -54,12 +122,27 @@ uint32_t ChunkMesh::GetIndexCount() const
 
 bool ChunkMesh::IsFaceVisible(
     const Chunk& chunk,
-    int x,
-    int y,
-    int z,
+    int x, int y, int z,
     const World* world) const
 {
-    return true;
+    // Di luar chunk secara lokal -> tanya World (kalau ada) untuk cek chunk tetangga
+    if (x < 0 || x >= Chunk::CHUNK_WIDTH ||
+        z < 0 || z >= Chunk::CHUNK_DEPTH)
+    {
+        if (!world) return true; // tanpa world, asumsikan visible (aman untuk build awal)
+
+        int globalX = chunk.GetChunkX() * Chunk::CHUNK_WIDTH + x;
+        int globalZ = chunk.GetChunkZ() * Chunk::CHUNK_DEPTH + z;
+        return world->IsBlockTransparent(globalX, y, globalZ);
+    }
+
+    if (y < 0) return false;             // dasar dunia, tidak usah gambar bawah bedrock
+    if (y >= Chunk::CHUNK_HEIGHT) return true;
+
+    uint8_t neighborID = chunk.GetBlock(x, y, z);
+    if (neighborID == 0) return true;
+
+    return BlockRegistry::Get().GetBlock(neighborID).IsTransparent;
 }
 
 void ChunkMesh::AddFace(
