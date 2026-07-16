@@ -3,12 +3,20 @@
     "name": "Cobblestone",
     "display_name": "Cobblestone",
     "hardness": 2.0,
+    "preferred_tool": "pickaxe",
+    "effective_tools": [
+        "pickaxe"
+    ],
+    "can_break_by_hand": true,
+    "harvest_level": 0,
+    "drop": "cobblestone",
+    "break_sound": "stone",
+    "step_sound": "stone",
     "is_solid": true,
     "is_transparent": false,
     "is_light_source": false,
     "light_level": 0,
-    "tool_type": "pickaxe",
-    "drop": "cobblestone",
+    "flammable": false,
     "textures": {
         "top": "textures/blocks/cobblestone.png",
         "bottom": "textures/blocks/cobblestone.png",
