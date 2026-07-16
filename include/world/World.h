@@ -6,6 +6,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include "world/Chunk.h"
+#include "world/ChunkMesh.h"
 #include "graphics/Shader.h"
 
 class World

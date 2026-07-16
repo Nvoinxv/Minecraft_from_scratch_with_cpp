@@ -1,7 +1,7 @@
 #ifndef PLAYER_CONTROLLER_H
 #define PLAYER_CONTROLLER_H
 
-#include "graphics/Camera.h"
+#include "../graphics/Camera.h"
 
 class Camera;
 class World;

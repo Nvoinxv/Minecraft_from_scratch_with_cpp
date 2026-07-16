@@ -9,10 +9,6 @@ in float v_ViewDistance;
 uniform sampler2D u_Texture;
 uniform vec3 u_ColorTint = vec3(1.0, 1.0, 1.0);
 
-uniform vec3  u_FogColor = vec3(0.6, 0.75, 0.9);
-uniform float u_FogStart = 40.0;
-uniform float u_FogEnd   = 80.0;
-
 void main()
 {
     vec4 texColor = texture(u_Texture, v_TexCoord);
