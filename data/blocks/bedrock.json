@@ -1,10 +1,30 @@
 {
-  "ID": 8,
-  "Name": "Bedrock",
-  "IsTransparent": false,
-  "Textures": {
-    "Top": "bedrock.png",
-    "Bottom": "bedrock.png",
-    "Side": "bedrock.png"
-  }
+  "id": 9,
+  "name": "Bedrock",
+  "display_name": "Bedrock",
+  "hardness": -1.0,
+  "break_behavior": "unbreakable",
+  "preferred_tool": "pickaxe",
+  "effective_tools": [],
+  "can_break_by_hand": false,
+  "harvest_level": 255,
+  "drop": "",
+  "break_sound": "stone",
+  "step_sound": "stone",
+  "is_solid": true,
+  "is_transparent": false,
+  "is_light_source": false,
+  "light_level": 0,
+  "render_type": "cube",
+  "flammable": false,
+  "is_interactive": false,
+  "textures": {
+    "top": "textures/blocks/bedrock.png",
+    "bottom": "textures/blocks/bedrock.png",
+    "front": "textures/blocks/bedrock.png",
+    "back": "textures/blocks/bedrock.png",
+    "left": "textures/blocks/bedrock.png",
+    "right": "textures/blocks/bedrock.png"
+  },
+  "atlas_index": 8
 }
