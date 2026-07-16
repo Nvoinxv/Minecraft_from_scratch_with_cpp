@@ -39,27 +39,47 @@ Struktur folder telah diperbarui dan dirapikan dengan pemisahan modular antara h
 ```
 MinecraftCPP/
 │
-├── assets/                  # Aset visual & audio (textures, shaders, fonts, sounds)
-├── data/                    # Data konfigurasi block & world
+├── assets/                          # Game assets (textures, shaders, fonts, sounds)
+│   ├── blocks/
+│   ├── fonts/
+│   ├── shaders/
+│   ├── sounds/
+│   └── textures/
 │
-├── include/                 # Header files (.h)
-│   ├── core/                # Application.h, Window.h, Input.h, Time.h
-│   ├── gameplay/            # CreativeMode.h, SurvivalMode.h, GameMode.h, Inventory.h, PlayerController.h
-│   ├── graphics/            # Camera.h, Mesh.h, Renderer.h, Shader.h, Texture.h
-│   ├── glad/                # GLAD OpenGL loader headers
-│   └── KHR/                 # Khronos platform headers
+├── data/                            # Game data & world configuration
+│   ├── blocks/
+│   └── worlds/
 │
-├── src/                     # Source code (.cpp / .c)
-│   ├── core/                # Implementasi core engine loop, window, input, time
-│   ├── gameplay/            # Implementasi logika permainan & mode game (Creative, Survival, Inventory, PlayerController)
-│   ├── graphics/            # Implementasi rendering pipeline & kamera
-│   ├── world/               # Implementasi dunia voxel (Block, Chunk, ChunkManager, ChunkMesh, World, WorldGenerator)
-│   └── glad.c               # GLAD implementation loader
+├── include/                         # Header files
+│   ├── core/                        # Core engine
+│   ├── gameplay/                    # Gameplay systems
+│   │   ├── controller/
+│   │   ├── gamemode/
+│   │   ├── interaction/
+│   │   └── player/
+│   ├── graphics/                    # Rendering system
+│   ├── world/                       # Voxel world system
+│   ├── glad/                        # OpenGL loader headers
+│   ├── KHR/                         # Khronos platform headers
+│   ├── json/                        # JSON library
+│   └── stb/                         # Image loading library
 │
-├── main.cpp                 # Entry point utama aplikasi
-├── dockerfile               # Kontainerisasi untuk build/deploy
-├── docker-compose.yml       # Konfigurasi Docker Compose
-└── README.md                # Dokumentasi proyek
+├── src/                             # Source files
+│   ├── core/                        # Engine implementation
+│   ├── gameplay/
+│   │   ├── controller/              # Player controller implementation
+│   │   ├── gamemode/                # Game mode implementation
+│   │   ├── interaction/             # Block interaction implementation
+│   │   └── player/                  # Player systems implementation
+│   ├── graphics/                    # Rendering implementation
+│   ├── world/                       # World generation & chunk system
+│   └── glad.c                       # OpenGL loader implementation
+│
+├── main.cpp                         # Application entry point
+├── dockerfile                       # Docker build configuration
+├── docker-compose.yml               # Docker Compose configuration
+├── README.md                        # Project documentation
+└── minecraft                        # Compiled executable (generated after build)
 ```
 
 ---
@@ -96,12 +116,17 @@ Clone repository ini terlebih dahulu, lalu compile menggunakan `g++` (atau compi
 g++ main.cpp \
 src/glad.c \
 src/core/*.cpp \
-src/gameplay/*.cpp \
+src/gameplay/controller/*.cpp \
+src/gameplay/gamemode/*.cpp \
+src/gameplay/interaction/*.cpp \
+src/gameplay/player/*.cpp \
 src/graphics/*.cpp \
 src/world/*.cpp \
 -Iinclude \
 -lglfw \
 -lGL \
+-ldl \
+-lpthread \
 -o minecraft
 ```
 
