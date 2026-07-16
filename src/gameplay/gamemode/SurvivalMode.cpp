@@ -1,4 +1,4 @@
-#include "gameplay/SurvivalMode.h"
+#include "gameplay/gamemode/SurvivalMode.h"
 #include "graphics/Camera.h"
 
 SurvivalMode::SurvivalMode()

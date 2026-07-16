@@ -1,7 +1,7 @@
 #ifndef SURVIVAL_MODE_H
 #define SURVIVAL_MODE_H
 
-#include "gameplay/GameMode.h"
+#include "GameMode.h"
 
 class Camera;
 

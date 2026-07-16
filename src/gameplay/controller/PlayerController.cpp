@@ -1,8 +1,9 @@
-#include "gameplay/PlayerController.h"
-
+#include "gameplay/controller/PlayerController.h"
 #include "graphics/Camera.h"
 #include "core/Input.h"
 #include "world/World.h"
+
+#include <GLFW/glfw3.h>
 
 PlayerController::PlayerController(Camera* camera)
     : m_Camera(camera)
@@ -30,11 +31,11 @@ Camera* PlayerController::GetCamera() const
 
 void PlayerController::HandleKeyboard(float deltaTime, World* world)
 {
-    const bool forward  = Input::IsKeyPressed(KEY_W);
-    const bool backward = Input::IsKeyPressed(KEY_S);
-    const bool left     = Input::IsKeyPressed(KEY_A);
-    const bool right    = Input::IsKeyPressed(KEY_D);
-    const bool jump     = Input::IsKeyPressed(KEY_SPACE);
+    const bool forward  = Input::IsKeyPressed(GLFW_KEY_W);
+    const bool backward = Input::IsKeyPressed(GLFW_KEY_S);
+    const bool left     = Input::IsKeyPressed(GLFW_KEY_A);
+    const bool right    = Input::IsKeyPressed(GLFW_KEY_D);
+    const bool jump     = Input::IsKeyPressed(GLFW_KEY_SPACE);
 
     m_Camera->ProcessKeyboard(
         forward,
@@ -49,8 +50,8 @@ void PlayerController::HandleKeyboard(float deltaTime, World* world)
 
 void PlayerController::HandleMouse()
 {
-    const float mouseX = Input::GetMouseDeltaX();
-    const float mouseY = Input::GetMouseDeltaY();
+    const float mouseX = (float)Input::GetDeltaX();
+    const float mouseY = (float)Input::GetDeltaY();
 
     m_Camera->ProcessMouse(mouseX, mouseY);
 }
