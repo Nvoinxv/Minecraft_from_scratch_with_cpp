@@ -4,9 +4,8 @@
     "display_name": "Oak Leaves",
     "hardness": 0.2,
     "break_behavior": "timed",
-    "preferred_tool": "shears",
+    "preferred_tool": "sword",
     "effective_tools": [
-        "shears",
         "sword"
     ],
     "can_break_by_hand": true,
