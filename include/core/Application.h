@@ -9,6 +9,7 @@
 #include "../graphics/Shader.h"
 #include "../world/World.h"
 #include "../world/Block.h"
+#include "../gameplay/BlockBreaker.h"
 
 
 class Application
@@ -46,7 +47,9 @@ private:
     GLuint m_CrosshairVAO = 0;
     GLuint m_CrosshairVBO = 0;
     World       m_World;
+    BlockBreaker m_BlockBreaker;
 
     bool        m_IsRunning;
+    bool        m_IsCreativeMode;
     float       m_TelemetryTimer;
 };

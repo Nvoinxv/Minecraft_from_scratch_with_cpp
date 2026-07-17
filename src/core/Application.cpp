@@ -18,6 +18,7 @@ Application::Application()
         75.0f,
         8.0f)),
     m_IsRunning(false),
+    m_IsCreativeMode(false),
     m_TelemetryTimer(0.0f)
 {
 }
@@ -174,6 +175,13 @@ void Application::Update()
         }
     }
 
+    // Toggle Creative Mode (C)
+    if (Input::IsKeyPressed(GLFW_KEY_C))
+    {
+        m_IsCreativeMode = !m_IsCreativeMode;
+        std::cout << "[Gameplay] Mode diubah ke: " << (m_IsCreativeMode ? "CREATIVE" : "SURVIVAL") << std::endl;
+    }
+
     // Pergerakan kamera/player berdasarkan input keyboard (W, S, A, D, SPACE=Lompat)
     m_Camera.ProcessKeyboard(
         Input::IsKeyDown(GLFW_KEY_W),
@@ -195,18 +203,26 @@ void Application::Update()
 
         // Interaksi: Menghancurkan (Kiri) atau Menaruh (Kanan) Blok
         // [Trackpad Workaround] Izinkan tombol Q (Kiri/Hancur) dan E (Kanan/Taruh)
-        bool leftClick = Input::IsMousePressed(GLFW_MOUSE_BUTTON_LEFT) || Input::IsKeyPressed(GLFW_KEY_Q);
-        bool rightClick = Input::IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT) || Input::IsKeyPressed(GLFW_KEY_E);
+        bool leftClickPress = Input::IsMousePressed(GLFW_MOUSE_BUTTON_LEFT) || Input::IsKeyPressed(GLFW_KEY_Q);
+        bool leftClickHold  = Input::IsMouseDown(GLFW_MOUSE_BUTTON_LEFT) || Input::IsKeyDown(GLFW_KEY_Q);
+        bool rightClickPress = Input::IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT) || Input::IsKeyPressed(GLFW_KEY_E);
 
-        if (leftClick || rightClick)
+        // Cancel breaking if left click is released
+        if (!leftClickHold)
         {
-            // Sederhana: Raycast maju sejauh 5 blok
+            m_BlockBreaker.CancelBreaking();
+        }
+
+        if (leftClickHold || rightClickPress)
+        {
+            // Raycast
             glm::vec3 rayPos = m_Camera.Position;
             glm::vec3 rayDir = m_Camera.Front;
             float maxReach = 5.0f;
             float stepSize = 0.05f;
             
             glm::vec3 previousPoint = rayPos;
+            bool hit = false;
 
             for (float t = 0; t < maxReach; t += stepSize)
             {
@@ -215,24 +231,63 @@ void Application::Update()
                 int by = static_cast<int>(std::floor(currentPoint.y));
                 int bz = static_cast<int>(std::floor(currentPoint.z));
 
-                if (m_World.GetBlockGlobal(bx, by, bz) != 0) // Menabrak blok solid
+                uint8_t targetID = m_World.GetBlockGlobal(bx, by, bz);
+                if (targetID != 0) // Menabrak blok solid
                 {
-                    if (leftClick)
+                    hit = true;
+                    if (leftClickHold)
                     {
-                        // Lindungi Bedrock agar tidak bisa dihancurkan
-                        uint8_t targetID = m_World.GetBlockGlobal(bx, by, bz);
-                        uint8_t bedrockID = BlockRegistry::Get().GetBlockByName("bedrock").ID;
-                        if (targetID == bedrockID)
+                        // Lindungi Bedrock
+                        if (m_BlockBreaker.IsUnbreakable(targetID))
                         {
-                            std::cout << "[Gameplay] Bedrock terlalu keras untuk dihancurkan!" << std::endl;
+                            if (leftClickPress) std::cout << "[Gameplay] Bedrock terlalu keras untuk dihancurkan!" << std::endl;
+                            m_BlockBreaker.CancelBreaking();
                             break;
                         }
 
-                        // 1. Hancurkan blok tersebut (set id = 0)
-                        m_World.SetBlockGlobal(bx, by, bz, 0);
-                        std::cout << "[Gameplay] Blok dihancurkan pada koordinat X:" << bx << " Y:" << by << " Z:" << bz << std::endl;
+                        bool breakBlock = false;
+
+                        if (m_IsCreativeMode)
+                        {
+                            // Creative mode: Instant break on press
+                            if (leftClickPress) {
+                                breakBlock = true;
+                            }
+                        }
+                        else
+                        {
+                            // Survival mode: Delayed break
+                            int currentTargetX, currentTargetY, currentTargetZ;
+                            bool isBreaking = m_BlockBreaker.GetTargetBlock(currentTargetX, currentTargetY, currentTargetZ);
+                            
+                            // Jika target berubah atau belum breaking, mulai ulang
+                            if (!isBreaking || currentTargetX != bx || currentTargetY != by || currentTargetZ != bz)
+                            {
+                                m_BlockBreaker.StartBreaking(bx, by, bz, targetID, 1.0f);
+                            }
+                            else
+                            {
+                                // Update progress
+                                BreakState state = m_BlockBreaker.Update(Time::GetDeltaTime());
+                                if (state == BreakState::Finished)
+                                {
+                                    breakBlock = true;
+                                    m_BlockBreaker.CancelBreaking();
+                                }
+                            }
+                        }
+
+                        if (breakBlock)
+                        {
+                            m_World.SetBlockGlobal(bx, by, bz, 0);
+                            std::cout << "[Gameplay] Blok dihancurkan pada koordinat X:" << bx << " Y:" << by << " Z:" << bz << std::endl;
+                        }
+                        else
+                        {
+                            break; // Stop raycast, kita sedang memukul block ini tapi belum hancur
+                        }
                     }
-                    else if (rightClick)
+                    else if (rightClickPress)
                     {
                         // 1. Taruh blok di ruang kosong tepat SEBELUM menabrak blok (memakai previousPoint)
                         int px = static_cast<int>(std::floor(previousPoint.x));
@@ -301,6 +356,11 @@ void Application::Update()
                 }
                 
                 previousPoint = currentPoint; // Simpan titik history untuk deteksi ruang kosong
+            }
+
+            // Jika raycast tidak mengenai apa-apa, batalkan breaking
+            if (!hit && leftClickHold) {
+                m_BlockBreaker.CancelBreaking();
             }
         }
     }
