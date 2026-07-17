@@ -19,6 +19,8 @@ public:
     virtual bool CanFly() const = 0;
     virtual bool HasGravity() const = 0;
     virtual bool HasFallDamage() const = 0;
+    virtual bool HasInfiniteBlocks() const = 0;
+    virtual bool CanInstantBreak() const = 0;
 };
 
 #endif
