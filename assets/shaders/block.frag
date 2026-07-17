@@ -8,6 +8,10 @@ in float v_ViewDistance;
 
 uniform sampler2D u_Texture;
 uniform vec3 u_ColorTint = vec3(1.0, 1.0, 1.0);
+uniform float u_FogStart;
+uniform float u_FogEnd;
+uniform vec3 u_FogColor;
+
 
 void main()
 {
