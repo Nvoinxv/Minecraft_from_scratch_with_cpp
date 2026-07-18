@@ -111,25 +111,8 @@ bool Application::Initialize()
     m_TexButton ->Load("assets/textures/ui/button.png");
 
     m_TexButtonHover = std::make_shared<Texture>();
-    m_TexButtonHover->Load("assets/textures/ui/button_hover.png");
-
-    m_TexSingleplayer = std::make_shared<Texture>();
-    m_TexSingleplayer->Load("assets/textures/ui/singleplayer_text.png");
-    
-    m_TexQuit = std::make_shared<Texture>();
-    m_TexQuit->Load("assets/textures/ui/quit_text.png");
-
-    m_TexBackground = std::make_shared<Texture>();
-    m_TexQuit->Load("assets/textures/ui/dirt.png");
-
-    /*
-    m_TexTitle = std::make_shared<Texture>("assets/textures/ui/title.png");
-    m_TexButton = std::make_shared<Texture>("assets/textures/ui/button.png");
-    m_TexButtonHover = std::make_shared<Texture>("assets/textures/ui/button_hover.png");
-    m_TexSingleplayer = std::make_shared<Texture>("assets/textures/ui/singleplayer_text.png");
-    m_TexQuit = std::make_shared<Texture>("assets/textures/ui/quit_text.png");
-    m_TexBackground = std::make_shared<Texture>("assets/textures/ui/dirt.png");
-    */
+    // Initialize Main Menu
+    m_MainMenu.Initialize();
 
     m_World.Initialize();
     int spawnGroundY = m_World.FindSurfaceY(
@@ -207,23 +190,17 @@ void Application::Update()
         float my = Input::GetMouseY();
         bool isClick = Input::IsMousePressed(GLFW_MOUSE_BUTTON_LEFT);
 
-        float btnW = 400.0f;
-        float btnH = 50.0f;
-        float btnX = (m_Window.GetWidth() - btnW) / 2.0f;
-        float singleBtnY = m_Window.GetHeight() / 2.0f;
-        float quitBtnY = singleBtnY + btnH + 20.0f;
+        MainMenuAction action = m_MainMenu.Update(mx, my, isClick, m_Window.GetWidth(), m_Window.GetHeight());
 
-        if (isClick) {
-            if (mx >= btnX && mx <= btnX + btnW && my >= singleBtnY && my <= singleBtnY + btnH) {
-                m_State = GameState::Playing;
-                glfwSetInputMode(m_Window.GetNativeWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-                std::cout << "[Menu] Masuk ke Singleplayer..." << std::endl;
-            }
-            else if (mx >= btnX && mx <= btnX + btnW && my >= quitBtnY && my <= quitBtnY + btnH) {
-                std::cout << "[Menu] Quit Game ditekan." << std::endl;
-                m_IsRunning = false;
-                glfwSetWindowShouldClose(m_Window.GetNativeWindow(), true);
-            }
+        if (action == MainMenuAction::Play) {
+            m_State = GameState::Playing;
+            glfwSetInputMode(m_Window.GetNativeWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            std::cout << "[Menu] Masuk ke Singleplayer..." << std::endl;
+        }
+        else if (action == MainMenuAction::Quit) {
+            std::cout << "[Menu] Quit Game ditekan." << std::endl;
+            m_IsRunning = false;
+            glfwSetWindowShouldClose(m_Window.GetNativeWindow(), true);
         }
         
         return; // Jangan jalankan update logic dunia/player saat di menu
@@ -591,69 +568,7 @@ void Application::Render()
     }
     else if (m_State == GameState::MainMenu)
     {
-        //---------------------------------------
-        // Main Menu UI
-        //---------------------------------------
-        
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        m_UIRenderer.UpdateScreenSize(m_Window.GetWidth(), m_Window.GetHeight());
-
-        float sw = static_cast<float>(m_Window.GetWidth());
-        float sh = static_cast<float>(m_Window.GetHeight());
-
-        // Draw tiled background
-        float bgTileSize = 128.0f;
-        for (float y = 0; y < sh; y += bgTileSize) {
-            for (float x = 0; x < sw; x += bgTileSize) {
-                m_UIRenderer.DrawTexture(m_TexBackground, x, y, bgTileSize, bgTileSize);
-            }
-        }
-
-        // Darken the background slightly
-        m_UIRenderer.DrawRect(0, 0, sw, sh, glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
-
-        // Logo
-        float logoW = sw * 0.8f;
-        if (logoW > 600.0f) logoW = 600.0f;
-        float logoH = logoW * 0.25f; // keep aspect ratio roughly 4:1
-        float logoX = (sw - logoW) / 2.0f;
-        float logoY = sh * 0.15f;
-        m_UIRenderer.DrawTexture(m_TexTitle, logoX, logoY, logoW, logoH, glm::vec4(1.0f), true);
-
-        // Buttons
-        float btnW = 400.0f;
-        float btnH = 50.0f;
-        float btnX = (sw - btnW) / 2.0f;
-        float singleBtnY = sh / 2.0f;
-        float quitBtnY = singleBtnY + btnH + 20.0f;
-        
-        float mx = Input::GetMouseX();
-        float my = Input::GetMouseY();
-        
-        bool hoverSingle = (mx >= btnX && mx <= btnX + btnW && my >= singleBtnY && my <= singleBtnY + btnH);
-        bool hoverQuit = (mx >= btnX && mx <= btnX + btnW && my >= quitBtnY && my <= quitBtnY + btnH);
-
-        // Draw button backgrounds
-        m_UIRenderer.DrawTexture(hoverSingle ? m_TexButtonHover : m_TexButton, btnX, singleBtnY, btnW, btnH);
-        m_UIRenderer.DrawTexture(hoverQuit ? m_TexButtonHover : m_TexButton, btnX, quitBtnY, btnW, btnH);
-
-        // Draw button texts
-        // Center text in buttons (scale text to fit nicely inside button)
-        float textW = btnW * 0.8f;
-        float textH = btnH * 0.6f;
-        float textX = btnX + (btnW - textW) / 2.0f;
-        float textY = singleBtnY + (btnH - textH) / 2.0f;
-        
-        m_UIRenderer.DrawTexture(m_TexSingleplayer, textX, textY, textW, textH, glm::vec4(1.0f), true);
-        
-        textY = quitBtnY + (btnH - textH) / 2.0f;
-        m_UIRenderer.DrawTexture(m_TexQuit, textX, textY, textW, textH, glm::vec4(1.0f), true);
-
-        glDisable(GL_BLEND);
-        glEnable(GL_DEPTH_TEST);
+        m_MainMenu.Render(Input::GetMouseX(), Input::GetMouseY(), m_Window.GetWidth(), m_Window.GetHeight());
     }
 
     m_Renderer.EndFrame();
@@ -684,8 +599,8 @@ void Application::Shutdown()
     glDeleteBuffers(1, &m_CrosshairVBO);
     BlockRegistry::Get().Shutdown();
 
-    std::cout << "[Application] Shutting down UI Renderer..." << std::endl;
-    m_UIRenderer.Shutdown();
+    std::cout << "[Application] Shutting down Main Menu..." << std::endl;
+    m_MainMenu.Shutdown();
 
     std::cout << "[Application] Shutting down Renderer..." << std::endl;
     m_Renderer.Shutdown();
