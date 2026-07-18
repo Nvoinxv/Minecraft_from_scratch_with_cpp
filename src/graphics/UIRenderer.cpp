@@ -9,7 +9,7 @@ UIRenderer::~UIRenderer() {}
 void UIRenderer::Initialize(int screenWidth, int screenHeight)
 {
     // Compile UI Shader
-    if (!m_UIShader.Compile("assets/shaders/ui.vs", "assets/shaders/ui.fs"))
+    if (!m_UIShader.Load("assets/shaders/ui.vs", "assets/shaders/ui.fs"))
     {
         std::cerr << "[UIRenderer] Failed to compile UI shaders." << std::endl;
     }
