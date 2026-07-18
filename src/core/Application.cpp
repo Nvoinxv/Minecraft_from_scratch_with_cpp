@@ -20,6 +20,7 @@ Application::Application()
         8.0f)),
     m_IsRunning(false),
     m_IsCreativeMode(false),
+    m_State(GameState::MainMenu),
     m_TelemetryTimer(0.0f)
 {
 }
@@ -100,6 +101,15 @@ bool Application::Initialize()
     glEnableVertexAttribArray(0);
     glBindVertexArray(0);
 
+    // Initialize UI Renderer and Textures
+    m_UIRenderer.Initialize(m_Window.GetWidth(), m_Window.GetHeight());
+    m_TexTitle = std::make_shared<Texture>("assets/textures/ui/title.png");
+    m_TexButton = std::make_shared<Texture>("assets/textures/ui/button.png");
+    m_TexButtonHover = std::make_shared<Texture>("assets/textures/ui/button_hover.png");
+    m_TexSingleplayer = std::make_shared<Texture>("assets/textures/ui/singleplayer_text.png");
+    m_TexQuit = std::make_shared<Texture>("assets/textures/ui/quit_text.png");
+    m_TexBackground = std::make_shared<Texture>("assets/textures/ui/dirt.png");
+
     m_World.Initialize();
     int spawnGroundY = m_World.FindSurfaceY(
     static_cast<int>(m_Camera.Position.x),
@@ -154,10 +164,55 @@ void Application::Update()
     // Periksa tombol ESC untuk keluar game dengan cepat
     if (Input::IsKeyPressed(GLFW_KEY_ESCAPE))
     {
-        std::cout << "[Input Event] Tombol ESC ditekan. Menutup aplikasi..." << std::endl;
-        m_IsRunning = false;
-        glfwSetWindowShouldClose(m_Window.GetNativeWindow(), true);
-        return;
+        if (m_State == GameState::Playing) {
+            // Escape while playing brings back the main menu
+            m_State = GameState::MainMenu;
+            std::cout << "[Gameplay] Kembali ke Main Menu." << std::endl;
+            return;
+        } else {
+            std::cout << "[Input Event] Tombol ESC ditekan di Main Menu. Menutup aplikasi..." << std::endl;
+            m_IsRunning = false;
+            glfwSetWindowShouldClose(m_Window.GetNativeWindow(), true);
+            return;
+        }
+    }
+
+    if (m_State == GameState::MainMenu)
+    {
+        // Pastikan kursor terlihat saat di menu
+        glfwSetInputMode(m_Window.GetNativeWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+        float mx = Input::GetMouseX();
+        float my = Input::GetMouseY();
+        bool isClick = Input::IsMousePressed(GLFW_MOUSE_BUTTON_LEFT);
+
+        float btnW = 400.0f;
+        float btnH = 50.0f;
+        float btnX = (m_Window.GetWidth() - btnW) / 2.0f;
+        float singleBtnY = m_Window.GetHeight() / 2.0f;
+        float quitBtnY = singleBtnY + btnH + 20.0f;
+
+        if (isClick) {
+            if (mx >= btnX && mx <= btnX + btnW && my >= singleBtnY && my <= singleBtnY + btnH) {
+                m_State = GameState::Playing;
+                glfwSetInputMode(m_Window.GetNativeWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                std::cout << "[Menu] Masuk ke Singleplayer..." << std::endl;
+            }
+            else if (mx >= btnX && mx <= btnX + btnW && my >= quitBtnY && my <= quitBtnY + btnH) {
+                std::cout << "[Menu] Quit Game ditekan." << std::endl;
+                m_IsRunning = false;
+                glfwSetWindowShouldClose(m_Window.GetNativeWindow(), true);
+            }
+        }
+        
+        return; // Jangan jalankan update logic dunia/player saat di menu
+    }
+
+    // Toggle Creative Mode (C)
+    if (Input::IsKeyPressed(GLFW_KEY_C))
+    {
+        m_IsCreativeMode = !m_IsCreativeMode;
+        std::cout << "[Gameplay] Mode diubah ke: " << (m_IsCreativeMode ? "CREATIVE" : "SURVIVAL") << std::endl;
     }
 
     // Tombol TAB untuk membebaskan / mengunci kembali kursor mouse
@@ -474,46 +529,109 @@ void Application::Render()
 {
     m_Renderer.BeginFrame();
 
-    //---------------------------------------
-    // World
-    //---------------------------------------
-
-    m_Shader.Use();
-    glm::mat4 projection = glm::perspective(
-        glm::radians(70.0f),
-        static_cast<float>(m_Window.GetWidth()) / static_cast<float>(m_Window.GetHeight()),
-        0.1f,
-        500.0f
-    );
-    glm::mat4 view = m_Camera.GetViewMatrix();
-    m_Shader.SetMat4("u_Projection", projection);
-    m_Shader.SetMat4("u_View", view);
-
-    m_Renderer.DrawWorld(m_World, m_Shader);
-
-    //---------------------------------------
-    // Player
-    //---------------------------------------
-
-    //---------------------------------------
-    // UI
-    //---------------------------------------
-
-    // Render Crosshair (Tanda '+') di tengah layar, hanya jika mode kursor sedang dikunci (mode FPS)
-    if (glfwGetInputMode(m_Window.GetNativeWindow(), GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
+    if (m_State == GameState::Playing)
     {
-        glDisable(GL_DEPTH_TEST); // Agar crosshair selalu tampil di depan blok
+        //---------------------------------------
+        // World
+        //---------------------------------------
 
-        // Menggunakan Logic Op Invert agar warna crosshair kontras (kebalikan) dari blok di belakangnya
-        glEnable(GL_COLOR_LOGIC_OP);
-        glLogicOp(GL_INVERT);
+        m_Shader.Use();
+        glm::mat4 projection = glm::perspective(
+            glm::radians(70.0f),
+            static_cast<float>(m_Window.GetWidth()) / static_cast<float>(m_Window.GetHeight()),
+            0.1f,
+            500.0f
+        );
+        glm::mat4 view = m_Camera.GetViewMatrix();
+        m_Shader.SetMat4("u_Projection", projection);
+        m_Shader.SetMat4("u_View", view);
 
-        m_CrosshairShader.Use();
-        glBindVertexArray(m_CrosshairVAO);
-        glDrawArrays(GL_LINES, 0, 4);
-        glBindVertexArray(0);
+        m_Renderer.DrawWorld(m_World, m_Shader);
 
-        glDisable(GL_COLOR_LOGIC_OP);
+        //---------------------------------------
+        // Crosshair
+        //---------------------------------------
+
+        if (glfwGetInputMode(m_Window.GetNativeWindow(), GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
+        {
+            glDisable(GL_DEPTH_TEST);
+
+            glEnable(GL_COLOR_LOGIC_OP);
+            glLogicOp(GL_INVERT);
+
+            m_CrosshairShader.Use();
+            glBindVertexArray(m_CrosshairVAO);
+            glDrawArrays(GL_LINES, 0, 4);
+            glBindVertexArray(0);
+
+            glDisable(GL_COLOR_LOGIC_OP);
+            glEnable(GL_DEPTH_TEST);
+        }
+    }
+    else if (m_State == GameState::MainMenu)
+    {
+        //---------------------------------------
+        // Main Menu UI
+        //---------------------------------------
+        
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        m_UIRenderer.UpdateScreenSize(m_Window.GetWidth(), m_Window.GetHeight());
+
+        float sw = static_cast<float>(m_Window.GetWidth());
+        float sh = static_cast<float>(m_Window.GetHeight());
+
+        // Draw tiled background
+        float bgTileSize = 128.0f;
+        for (float y = 0; y < sh; y += bgTileSize) {
+            for (float x = 0; x < sw; x += bgTileSize) {
+                m_UIRenderer.DrawTexture(m_TexBackground, x, y, bgTileSize, bgTileSize);
+            }
+        }
+
+        // Darken the background slightly
+        m_UIRenderer.DrawRect(0, 0, sw, sh, glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
+
+        // Logo
+        float logoW = sw * 0.8f;
+        if (logoW > 600.0f) logoW = 600.0f;
+        float logoH = logoW * 0.25f; // keep aspect ratio roughly 4:1
+        float logoX = (sw - logoW) / 2.0f;
+        float logoY = sh * 0.15f;
+        m_UIRenderer.DrawTexture(m_TexTitle, logoX, logoY, logoW, logoH, glm::vec4(1.0f), true);
+
+        // Buttons
+        float btnW = 400.0f;
+        float btnH = 50.0f;
+        float btnX = (sw - btnW) / 2.0f;
+        float singleBtnY = sh / 2.0f;
+        float quitBtnY = singleBtnY + btnH + 20.0f;
+        
+        float mx = Input::GetMouseX();
+        float my = Input::GetMouseY();
+        
+        bool hoverSingle = (mx >= btnX && mx <= btnX + btnW && my >= singleBtnY && my <= singleBtnY + btnH);
+        bool hoverQuit = (mx >= btnX && mx <= btnX + btnW && my >= quitBtnY && my <= quitBtnY + btnH);
+
+        // Draw button backgrounds
+        m_UIRenderer.DrawTexture(hoverSingle ? m_TexButtonHover : m_TexButton, btnX, singleBtnY, btnW, btnH);
+        m_UIRenderer.DrawTexture(hoverQuit ? m_TexButtonHover : m_TexButton, btnX, quitBtnY, btnW, btnH);
+
+        // Draw button texts
+        // Center text in buttons (scale text to fit nicely inside button)
+        float textW = btnW * 0.8f;
+        float textH = btnH * 0.6f;
+        float textX = btnX + (btnW - textW) / 2.0f;
+        float textY = singleBtnY + (btnH - textH) / 2.0f;
+        
+        m_UIRenderer.DrawTexture(m_TexSingleplayer, textX, textY, textW, textH, glm::vec4(1.0f), true);
+        
+        textY = quitBtnY + (btnH - textH) / 2.0f;
+        m_UIRenderer.DrawTexture(m_TexQuit, textX, textY, textW, textH, glm::vec4(1.0f), true);
+
+        glDisable(GL_BLEND);
         glEnable(GL_DEPTH_TEST);
     }
 
@@ -544,6 +662,9 @@ void Application::Shutdown()
     glDeleteVertexArrays(1, &m_CrosshairVAO);
     glDeleteBuffers(1, &m_CrosshairVBO);
     BlockRegistry::Get().Shutdown();
+
+    std::cout << "[Application] Shutting down UI Renderer..." << std::endl;
+    m_UIRenderer.Shutdown();
 
     std::cout << "[Application] Shutting down Renderer..." << std::endl;
     m_Renderer.Shutdown();
