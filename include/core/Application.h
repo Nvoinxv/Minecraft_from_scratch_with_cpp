@@ -9,7 +9,7 @@
 #include "../graphics/Shader.h"
 #include "../world/World.h"
 #include "../world/Block.h"
-#include "../gameplay/BlockBreaker.h"
+#include "../gameplay/interaction/BlockBreaker.h"
 
 
 class Application

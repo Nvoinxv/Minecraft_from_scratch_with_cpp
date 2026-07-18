@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include "world/ChunkMesh.h"
+#include "gameplay/interaction/BlockBreaker.h"
 
 Application::Application()
     :
