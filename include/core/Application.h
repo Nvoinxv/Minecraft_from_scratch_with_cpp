@@ -10,7 +10,7 @@
 #include "../world/World.h"
 #include "../world/Block.h"
 #include "../graphics/UIRenderer.h"
-#include "../gameplay/BlockBreaker.h"
+#include "../gameplay/interaction/BlockBreaker.h"
 
 enum class GameState {
     MainMenu,

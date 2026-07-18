@@ -103,12 +103,33 @@ bool Application::Initialize()
 
     // Initialize UI Renderer and Textures
     m_UIRenderer.Initialize(m_Window.GetWidth(), m_Window.GetHeight());
+
+    m_TexTitle = std::make_shared<Texture>();
+    m_TexTitle->Load("assets/textures/ui/title.png");
+    
+    m_TexButton = std::make_shared<Texture>();
+    m_TexButton ->Load("assets/textures/ui/button.png");
+
+    m_TexButtonHover = std::make_shared<Texture>();
+    m_TexButtonHover->Load("assets/textures/ui/button_hover.png");
+
+    m_TexSingleplayer = std::make_shared<Texture>();
+    m_TexSingleplayer->Load("assets/textures/ui/singleplayer_text.png");
+    
+    m_TexQuit = std::make_shared<Texture>();
+    m_TexQuit->Load("assets/textures/ui/quit_text.png");
+
+    m_TexBackground = std::make_shared<Texture>();
+    m_TexQuit->Load("assets/textures/ui/dirt.png");
+
+    /*
     m_TexTitle = std::make_shared<Texture>("assets/textures/ui/title.png");
     m_TexButton = std::make_shared<Texture>("assets/textures/ui/button.png");
     m_TexButtonHover = std::make_shared<Texture>("assets/textures/ui/button_hover.png");
     m_TexSingleplayer = std::make_shared<Texture>("assets/textures/ui/singleplayer_text.png");
     m_TexQuit = std::make_shared<Texture>("assets/textures/ui/quit_text.png");
     m_TexBackground = std::make_shared<Texture>("assets/textures/ui/dirt.png");
+    */
 
     m_World.Initialize();
     int spawnGroundY = m_World.FindSurfaceY(

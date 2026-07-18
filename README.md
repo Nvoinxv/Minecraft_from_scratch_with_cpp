@@ -122,7 +122,7 @@ src/gameplay/interaction/*.cpp \
 src/gameplay/player/*.cpp \
 src/graphics/*.cpp \
 src/world/*.cpp \
-src/ui/*.cpp\
+src/ui/*.cpp \
 -Iinclude \
 -lglfw \
 -lGL \
