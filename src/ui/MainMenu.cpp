@@ -45,8 +45,12 @@ MainMenuAction MainMenu::Update(int mouseX, int mouseY, bool isMouseClicked, int
     float btnW = 400.0f;
     float btnH = 50.0f;
     float btnX = (sw - btnW) / 2.0f;
-    float singleBtnY = sh / 2.0f;
-    float quitBtnY = singleBtnY + btnH + 20.0f;
+    
+    // Anchor buttons around 55% from the top
+    float singleBtnY = sh * 0.55f;
+    
+    // Even vertical spacing between buttons
+    float quitBtnY = singleBtnY + btnH + 16.0f;
 
     if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= singleBtnY && mouseY <= singleBtnY + btnH) {
         return MainMenuAction::Play;
@@ -90,15 +94,21 @@ void MainMenu::Render(int mouseX, int mouseY, int screenWidth, int screenHeight)
     }
     
     float logoX = (sw - logoW) / 2.0f;
-    float logoY = sh * 0.15f;
+    
+    // Anchor title around 25% from the top
+    float logoY = sh * 0.25f;
     m_UIQuad.Draw(m_UIShader, projection, logoX, logoY, logoW, logoH, m_TexTitle, glm::vec4(1.0f), true);
 
     // Buttons
     float btnW = 400.0f;
     float btnH = 50.0f;
     float btnX = (sw - btnW) / 2.0f;
-    float singleBtnY = sh / 2.0f;
-    float quitBtnY = singleBtnY + btnH + 20.0f;
+    
+    // Anchor buttons around 55% from the top
+    float singleBtnY = sh * 0.55f;
+    
+    // Even vertical spacing between buttons
+    float quitBtnY = singleBtnY + btnH + 16.0f;
     
     bool hoverSingle = (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= singleBtnY && mouseY <= singleBtnY + btnH);
     bool hoverQuit = (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= quitBtnY && mouseY <= quitBtnY + btnH);
