@@ -8,16 +8,27 @@ MainMenu::~MainMenu() {}
 void MainMenu::Initialize() {
     m_UIQuad.Initialize();
     
-    if (!m_UIShader.Compile("assets/shaders/ui.vs", "assets/shaders/ui.fs")) {
+    if (!m_UIShader.Load("assets/shaders/ui.vs", "assets/shaders/ui.fs")) {
         std::cerr << "[MainMenu] Failed to compile UI shaders." << std::endl;
     }
 
-    m_TexTitle = std::make_shared<Texture>("assets/textures/ui/title.png");
-    m_TexButton = std::make_shared<Texture>("assets/textures/ui/button.png");
-    m_TexButtonHover = std::make_shared<Texture>("assets/textures/ui/button_hover.png");
-    m_TexSingleplayer = std::make_shared<Texture>("assets/textures/ui/singleplayer_text.png");
-    m_TexQuit = std::make_shared<Texture>("assets/textures/ui/quit_text.png");
-    m_TexBackground = std::make_shared<Texture>("assets/textures/ui/dirt.png");
+    m_TexTitle = std::make_shared<Texture>();
+    m_TexTitle->Load("assets/textures/ui/title.png");
+
+    m_TexButton = std::make_shared<Texture>();
+    m_TexButton->Load("assets/textures/ui/button.png");
+
+    m_TexButtonHover = std::make_shared<Texture>();
+    m_TexButtonHover->Load("assets/textures/ui/button_hover.png");
+
+    m_TexSingleplayer = std::make_shared<Texture>();
+    m_TexSingleplayer->Load("assets/textures/ui/singleplayer_text.png");
+    
+    m_TexQuit = std::make_shared<Texture>();
+    m_TexQuit->Load("assets/textures/ui/quit_text.png");
+
+    m_TexBackground = std::make_shared<Texture>();
+    m_TexBackground->Load("assets/textures/ui/dirt.png");
 }
 
 void MainMenu::Shutdown() {
