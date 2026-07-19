@@ -39,7 +39,7 @@ bool Application::Initialize()
     std::cout << "\n================================================================================\n";
     std::cout << "                 MINECRAFT ALPHA ENGINE - INITIALIZATION                        \n";
     std::cout << "================================================================================\n";
-    std::cout << "[Application] 1/4 Creating GLFW Window (1280x720)..." << std::endl;
+    std::cout << "[Application] 1/6 Creating GLFW Window (1280x720)..." << std::endl;
 
     if (!m_Window.Create())
     {
@@ -49,16 +49,16 @@ bool Application::Initialize()
     m_Window.PollEvents();
     std::cout << "[Application]     -> Window successfully created and context active." << std::endl;
 
-    std::cout << "[Application] 2/4 Initializing Time System..." << std::endl;
+    std::cout << "[Application] 2/6 Initializing Time System..." << std::endl;
     Time::Init();
     std::cout << "[Application]     -> Time initialized (FPS & DeltaTime tracking active)." << std::endl;
 
-    std::cout << "[Application] 3/4 Initializing Input Handlers..." << std::endl;
+    std::cout << "[Application] 3/6 Initializing Input Handlers..." << std::endl;
     Input::Initialize(
         m_Window.GetNativeWindow());
     std::cout << "[Application]     -> Keyboard, Mouse, and Scroll callbacks registered." << std::endl;
 
-    std::cout << "[Application] 4/4 Initializing Renderer..." << std::endl;
+    std::cout << "[Application] 4/6 Initializing Renderer..." << std::endl;
     if (!m_Renderer.Initialize())
     {
         std::cerr << "[Application] ERROR: Renderer initialization failed!" << std::endl;
@@ -72,7 +72,7 @@ bool Application::Initialize()
         std::cerr << "[Application] WARNING: BlockRegistry initialization encountered issues or used fallbacks." << std::endl;
     }
 
-    std::cout << "[Application] 6/6 Loading 3D Voxel Shaders & Generating World..." << std::endl;
+    std::cout << "[Application] 6/6 Loading 3D Voxel Shaders, UI & Generating World..." << std::endl;
     if (!m_Shader.Load("assets/shaders/block.vert", "assets/shaders/block.frag"))
     {
         std::cerr << "[Application] ERROR: Failed to load block shaders!" << std::endl;
@@ -101,34 +101,26 @@ bool Application::Initialize()
     glEnableVertexAttribArray(0);
     glBindVertexArray(0);
 
-    // Initialize UI Renderer and Textures
-    m_UIRenderer.Initialize(m_Window.GetWidth(), m_Window.GetHeight());
-
-    m_TexTitle = std::make_shared<Texture>();
-    m_TexTitle->Load("assets/textures/ui/title.png");
-    
-    m_TexButton = std::make_shared<Texture>();
-    m_TexButton ->Load("assets/textures/ui/button.png");
-
-    m_TexButtonHover = std::make_shared<Texture>();
-    // Initialize Main Menu
+    // Main Menu is fully self-contained: it loads its own shader,
+    // quad geometry, and textures internally. Application does not
+    // own or duplicate any of those resources.
     m_MainMenu.Initialize();
 
     m_World.Initialize();
     int spawnGroundY = m_World.FindSurfaceY(
-    static_cast<int>(m_Camera.Position.x),
-    static_cast<int>(m_Camera.Position.z));
+        static_cast<int>(m_Camera.Position.x),
+        static_cast<int>(m_Camera.Position.z));
 
     m_Camera.Position.y = static_cast<float>(spawnGroundY + 1) + Camera::PLAYER_H;
-    
+
     // Fog & render distance harus satu sumber angka: World::RENDER_DISTANCE.
     // Kalau lo ubah RENDER_DISTANCE di World.h, fog otomatis ikut menyesuaikan.
     m_Renderer.SetRenderDistance(
         static_cast<float>(m_World.GetRenderDistanceInChunks() * Chunk::CHUNK_WIDTH)
     );
     std::cout << "[Application] Spawn Y dikoreksi -> groundY=" << spawnGroundY
-            << " | Camera.Position.y=" << m_Camera.Position.y << std::endl;
-    
+              << " | Camera.Position.y=" << m_Camera.Position.y << std::endl;
+
     m_IsRunning = true;
     m_TelemetryTimer = 0.0f;
 
@@ -202,7 +194,7 @@ void Application::Update()
             m_IsRunning = false;
             glfwSetWindowShouldClose(m_Window.GetNativeWindow(), true);
         }
-        
+
         return; // Jangan jalankan update logic dunia/player saat di menu
     }
 
@@ -227,13 +219,6 @@ void Application::Update()
             glfwSetInputMode(m_Window.GetNativeWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             std::cout << "[Input Event] Tombol TAB: Kursor dikunci (FPS Look Mode)." << std::endl;
         }
-    }
-
-    // Toggle Creative Mode (C)
-    if (Input::IsKeyPressed(GLFW_KEY_C))
-    {
-        m_IsCreativeMode = !m_IsCreativeMode;
-        std::cout << "[Gameplay] Mode diubah ke: " << (m_IsCreativeMode ? "CREATIVE" : "SURVIVAL") << std::endl;
     }
 
     // Pergerakan kamera/player berdasarkan input keyboard (W, S, A, D, SPACE=Lompat)
@@ -274,7 +259,7 @@ void Application::Update()
             glm::vec3 rayDir = m_Camera.Front;
             float maxReach = 5.0f;
             float stepSize = 0.05f;
-            
+
             glm::vec3 previousPoint = rayPos;
             bool hit = false;
 
@@ -313,7 +298,7 @@ void Application::Update()
                             // Survival mode: Delayed break
                             int currentTargetX, currentTargetY, currentTargetZ;
                             bool isBreaking = m_BlockBreaker.GetTargetBlock(currentTargetX, currentTargetY, currentTargetZ);
-                            
+
                             // Jika target berubah atau belum breaking, mulai ulang
                             if (!isBreaking || currentTargetX != bx || currentTargetY != by || currentTargetZ != bz)
                             {
@@ -408,7 +393,7 @@ void Application::Update()
 
                     break; // Berhenti mengecek setelah satu blok berhasil dihancurkan/ditaruh
                 }
-                
+
                 previousPoint = currentPoint; // Simpan titik history untuk deteksi ruang kosong
             }
 
@@ -440,17 +425,17 @@ void Application::UpdateTelemetry()
     // 1. Deteksi event input interaktif (Mouse Click & Scroll & F3) untuk log langsung di terminal
     if (Input::IsMousePressed(GLFW_MOUSE_BUTTON_LEFT))
     {
-        std::cout << "[Input Event] Klik Kiri Mouse pada koordinat (" 
-                  << Input::GetMouseX() << ", " << Input::GetMouseY() 
-                  << ") | Posisi Player: [" << m_Camera.Position.x << ", " 
+        std::cout << "[Input Event] Klik Kiri Mouse pada koordinat ("
+                  << Input::GetMouseX() << ", " << Input::GetMouseY()
+                  << ") | Posisi Player: [" << m_Camera.Position.x << ", "
                   << m_Camera.Position.y << ", " << m_Camera.Position.z << "]\n";
     }
 
     if (Input::IsMousePressed(GLFW_MOUSE_BUTTON_RIGHT))
     {
-        std::cout << "[Input Event] Klik Kanan Mouse pada koordinat (" 
-                  << Input::GetMouseX() << ", " << Input::GetMouseY() 
-                  << ") | Posisi Player: [" << m_Camera.Position.x << ", " 
+        std::cout << "[Input Event] Klik Kanan Mouse pada koordinat ("
+                  << Input::GetMouseX() << ", " << Input::GetMouseY()
+                  << ") | Posisi Player: [" << m_Camera.Position.x << ", "
                   << m_Camera.Position.y << ", " << m_Camera.Position.z << "]\n";
     }
 
@@ -568,6 +553,8 @@ void Application::Render()
     }
     else if (m_State == GameState::MainMenu)
     {
+        // MainMenu renders itself entirely (background, logo, buttons)
+        // using its own shader/quad/textures.
         m_MainMenu.Render(Input::GetMouseX(), Input::GetMouseY(), m_Window.GetWidth(), m_Window.GetHeight());
     }
 
